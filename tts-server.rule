@@ -12,3 +12,4 @@ tts-server stt-server rwx
 tts-server sys-assert::core rwxat
 tts-server system::homedir arwxt
 tts-server _ w
+tts-server device::sys_logging w
