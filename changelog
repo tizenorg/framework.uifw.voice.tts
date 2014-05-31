@@ -1,0 +1,923 @@
+tts (0.2.36) -- Thu, 15 May 2014
+
+  * Fix build for profile support (Kwangyoun Kim <ky85.kim@samsung.com>)
+  * Fix bug audio unprepare (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.35) -- Thu, 24 Apr 2014
+
+  * Add tts sample app (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.34) -- Mon, 14 Apr 2014
+
+  * Delete unused API (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.33) -- Wed, 02 Apr 2014
+
+  * Fix default engine id change bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.32) -- Wed, 26 Mar 2014
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.31-2) -- Tue, 25 Mar 2014
+
+  * Update setting api (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Update config error code (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.31-1) -- Mon, 24 Mar 2014
+
+  * Support pitch option in setting (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.31) -- Thu, 13 Feb 2014
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.30-1) -- Wed, 12 Feb 2014
+
+  * Add dbus error free (Kwangyoun Kim <ky85.kim@samsung.com>)
+  * Update smack rule (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.30) -- Thu, 16 Jan 2014
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.29-2) -- Thu, 16 Jan 2014
+
+  * Update smack rule to access vconf key (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.29-1) -- Thu, 16 Jan 2014
+
+  * Fix crash issue (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.29) -- Mon, 6 Jan 2014
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.28-2) -- Mon, 6 Jan 2014
+
+  * Fix audio interrupt bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.28-1) -- Mon, 6 Jan 2014
+
+  * Update engine api (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.28) -- Fri, 3 Jan 2014
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.27-1) -- Fri, 3 Jan 2014
+
+  * Update player for race condition (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.27) -- Thu, 26 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.26-2) -- Thu, 26 Dec 2013
+
+  * Add memory free on player (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.26-1) -- Tue, 24 Dec 2013
+
+  * Change player to audio out on screen reader mode (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.26) -- Mon, 23 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.25-1) -- Mon, 23 Dec 2013
+
+  * Delete unused code (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.25) -- Fri, 20 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.24-1) -- Fri, 20 Dec 2013
+
+  * Fix file message bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.24) -- Thu, 19 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.23-1) -- Thu, 19 Dec 2013
+
+  * Add to set sount type (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.23) -- Thu, 12 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.22-1) -- Mon, 09 Dec 2013
+
+  * Fix bug on initialize timeout (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.22) -- Fri, 06 Dec 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.21-1) -- Fri, 06 Dec 2013
+
+  * Fix crash issue (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.21) -- Thu, 05 Dec 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.20-1) -- Thu, 05 Dec 2013
+
+  * Add load / unload voice of engine (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.20) -- Fri, 30 Nov 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.19-2) -- Fri, 29 Nov 2013
+
+  * Fix spec file (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.19-1) -- Fri, 22 Nov 2013
+
+  * Fix bug on clean up message file (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.19) -- Fri, 15 Nov 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.18-2) -- Fri, 15 Nov 2013
+
+  * Block tts api on screen reader off state (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.18-1) -- Thu, 14 Nov 2013
+
+  * Update file message name from mode (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Clean up file message (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.18) -- Thu, 14 Nov 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.17-1) -- Thu, 14 Nov 2013
+
+  * Fix code about utterance message for screenreader (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.17) -- Tue, 12 Nov 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.16-1) -- Tue, 12 Nov 2013
+
+  * Update screen reader to be stable (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.16) -- Fri, 8 Nov 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.15-3) -- Fri, 8 Nov 2013
+
+  * Fix block issue in inotify (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.15-2) -- Mon, 4 Nov 2013
+
+  * Fix build warning (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.15-1) -- Mon, 4 Nov 2013
+
+  * Add code for check running app when clean up client (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.15) -- Mon, 28 Oct 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.14-1) -- Mon, 28 Oct 2013
+
+  * Disable client clean up (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.14) -- Mon, 28 Oct 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.13-2) -- Mon, 28 Oct 2013
+
+  * Divide devel package (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.13-1) -- Fri, 25 Oct 2013
+
+  * Add code for check text valid (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.13) -- Tue, 22 Oct 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.12-1) -- Tue, 22 Oct 2013
+
+  * Fix memory leak (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix dbus time out (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.12) -- Mon, 21 Oct 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.11-3) -- Mon, 21 Oct 2013
+
+  * Update daemon fork to use thread (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.11-2) -- Fri, 18 Oct 2013
+
+  * Remove not used setting api (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.11-1) -- Fri, 27 Sep 2013
+
+  * Fix minor memory bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.11) -- Thu, 26 Sep 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.10-1) -- Wed, 25 Sep 2013
+
+  * Fix crash issue (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Clean up engine api (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.10) -- Tue, 24 Sep 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.9-4) -- Tue, 24 Sep 2013
+
+  * Add TC (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.9-3) -- Tue, 24 Sep 2013
+
+  * Fix minor memory bugs (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.9-2) -- Thu, 29 Aug 2013
+
+  * Update docs and change api folder (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.9-1) -- Wed, 28 Aug 2013
+
+  * Add error callback when player fail to start sound (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.9) -- Wed, 21 Aug 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.8-2) -- Tue, 20 Aug 2013
+
+  * Fix crash issue to change display language (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.8-1) -- Mon, 19 Aug 2013
+
+  * Clean up code and log (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.8) -- Wed, 31 Jul 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.7-1) -- Wed, 31 Jul 2013
+
+  * Remove test module (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.7) -- Wed, 31 Jul 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.6-3) -- Wed, 31 Jul 2013
+
+  * Add build config for dlog (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.6-2) -- Wed, 31 Jul 2013
+
+  * Fix bug to set auto language (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.6-1) -- Tue, 30 Jul 2013
+
+  * Add test module (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.6) -- Thu, 25 Jul 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.5-1) -- Thu, 25 Jul 2013
+
+  * Fix setting error handling (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.5) -- Thu, 18 Jul 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.4-2) -- Thu, 18 Jul 2013
+
+  * Fix client create bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.4-1) -- Tue, 09 Jul 2013
+
+  * Fix initialize of config client (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Clean up smack rule (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.4) -- Wed, 10 Jul 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.3-5) -- Tue, 09 Jul 2013
+
+  * Fix code to manage config callback (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.3-4) -- Fri, 05 Jul 2013
+
+  * Fix code bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.3-3) -- Thr, 04 Jul 2013
+
+  * Change default voice is en_GB (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.3-2) -- Thr, 04 Jul 2013
+
+  * Support auto language setting (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.3-1) -- Sat, 29 Jun 2013
+
+  * Update smack label of voice directory (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.3) -- Wed, 26 Jun 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.2-1) -- Wed, 26 Jun 2013
+
+  * Fix config instance bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.2) -- Tue, 25 Jun 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.2.1-2) -- Tue, 25 Jun 2013
+
+  * Fix to remove temp wav file (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Synchronize speech rate vconf key with tts configure (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.1-1) -- Mon, 24 Jun 2013
+
+  * Fix player priority to mix message with TTS (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.1) -- Fri, 21 Jun 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.0-1) -- Fri, 21 Jun 2013
+
+  * Fix to save config init (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.0) -- Fri, 21 Jun 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.66-1) -- Fri, 21 Jun 2013
+
+  * Fix voice config directroy owner (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.66) -- Thu, 20 Jun 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.65-3) -- Thu, 20 Jun 2013
+
+  * Fix bug of voice type change (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.65-2) -- Thu, 20 Jun 2013
+
+  * Update to get voice of client (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Add auto voice selection (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix bug (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.65-1) -- Wed, 19 Jun 2013
+
+  * Update XML config based (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.65) -- Sat, 15 Jun 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.64-1) -- Sat, 15 Jun 2013
+
+  * Fix to free invalid timer in stop (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.64) -- Fri, 14 Jun 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.63-1) -- Fri, 14 Jun 2013
+
+  * Update smack rule (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.63) -- Wed, 12 Jun 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.62-2) -- Wed, 12 Jun 2013
+
+  * Add api to detect default voice change (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.62-1) -- Wed, 12 Jun 2013
+
+  * Add code for secure log (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.62) -- Tue, 14 May 2013
+
+  * Release version 0.1.62 (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.61-2) -- Tue, 14 May 2013
+
+  * Initialize default language from display language (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.61-1) -- Tue, 07 May 2013
+
+  * Delete code about print (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.61) -- Thu, 02 May 2013
+
+  * Release version 0.1.61 (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.60-2) -- Thu, 02 May 2013
+
+  * Add to remove timer when daemon is destroyed (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.60-1) -- Fri, 19 Apr 2013
+
+  * Update interrupt scheduling of Screen reader (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.60) -- Tue, 16 Apr 2013
+
+  * Release version 0.1.60 (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.59-2) -- Fri, 12 Apr 2013
+
+  * Fix code for setting init API change (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.59-1) -- Fri, 12 Apr 2013
+
+  * Fix prevent issue (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.59) -- Wed, 10 Apr 2013
+
+  * Release version (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.58-2) -- Wed, 10 Apr 2013
+
+  * Add file for sysinfo check (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.58-1) -- Mon, 01 Apr 2013
+
+  * Add setting init api to change name (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.58) -- Fri, 29 Mar 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.57-2) -- Tue, 26 Mar 2013
+
+  * Update config to adapt voice setting in notification daemon (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.57-1) -- Tue, 26 Mar 2013
+
+  * Fix bug to get engine id from config file (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix default language is english (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.57) -- Fri, 22 Mar 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.56-1) -- Wed, 21 Mar 2013
+
+  * Add using speech rate by setting in screen reader (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Divide config file (Dongyeol Lee <dy3.lee@samsung.com>)
+  
+tts (0.1.56) -- Wed, 20 Mar 2013
+
+  * Release version (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.55-2) -- Wed, 20 Mar 2013
+
+  * Fix bug not to resume tts in 'pause' state (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.1.55-1) -- Wed, 20 Mar 2013
+
+  * File message(IPC) is applied (Kwangyoun Kim <ky85.kim@samsung.com)
+
+tts (0.1.55) -- Mon, 04 Mar 2013
+
+  * Clean up code (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix prevent issue (Kwangyoun Kim <ky85.kim@samsung.com>)
+
+tts (0.1.1-54)
+
+  * Fix code for synthesis by dbus
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Mon, 4 Mar 2013
+ 
+tts (0.1.1-53)
+
+  * Update smack rule
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Wed, 27 Feb 2013
+
+tts (0.1.1-52)
+
+  * Improve high CPU share
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Thu, 21 Feb 2013
+
+tts (0.1.1-51)
+
+  * Update smack rule
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Thu, 14 Feb 2013
+
+tts (0.1.1-50)
+
+  * Update smack rule
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Fri, 08 Feb 2013
+
+tts (0.1.1-49)
+
+  * Add TTS mode(notification and screen reader)
+  * Update smack rule
+
+ --Kwangyoun Kim <ky85.kim@samsung.com>  Thu, 07 Feb 2013
+
+tts (0.1.1-48)
+
+  * Update smack rule
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Wed, 06 Feb 2013
+
+tts (0.1.1-47)
+
+  * Fix bug (Nabi S1-12186)
+  * Add smack rule
+  * Fix player sync problem
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Tue, 05 Feb 2013
+
+tts (0.1.1-46slp2+1) unstable; urgency=low
+
+  * Fix for GCC 4.7
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Tue, 29 Jan 2013 17:00:41 +0900
+
+tts (0.1.1-45slp2+1) unstable; urgency=low
+
+  * Fix PLM issue(P121126-2493)
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Mon, 28 Jan 2013 17:07:57 +0900
+
+tts (0.1.1-44slp2+1) unstable; urgency=low
+
+  * Fix PLM issue(P130121-3243)
+  * Add Daemon termination
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Thu, 24 Jan 2013 17:52:28 +0900
+
+tts (0.1.1-43slp2+1) unstable; urgency=low
+
+  * Change license and notice file
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Wed, 23 Jan 2013 14:45:07 +0900
+
+tts (0.1.1-42slp2+1) unstable; urgency=low
+
+  * Fix prevent issue
+  * Change license file 
+
+ -- Kwangyoun Kim <ky85.kim@samsung.com>  Tue, 15 Jan 2013 11:30:30 +0900
+
+tts (0.1.1-41slp2+1) unstable; urgency=low
+
+  * Fix prevent issue
+  * Fix bug when engine result is NULL
+  * Change config path
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 18 Dec 2012 12:16:38 +0900
+
+tts (0.1.1-40slp2+1) unstable; urgency=low
+
+  * Fix prevent
+  * Git: framework/uifw/voice/tts
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 04 Dec 2012 16:40:08 +0900
+
+tts (0.1.1-39slp2+1) unstable; urgency=low
+
+  * Remove dependency of openssl
+  * Fix bug of config 
+  * Git: framework/uifw/voice/tts
+  * Tag: tts_0.1.1-39slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 22 Nov 2012 16:31:53 +0900
+
+tts (0.1.1-38slp2+1) unstable; urgency=low
+
+  * Add manifest and license file
+  * Add tag for binary merge
+  * Git: framework/uifw/voice/tts
+  * Tag: tts_0.1.1-38slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 10 Oct 2012 14:48:46 +0900
+
+tts (0.1.1-37slp2+1) unstable; urgency=low
+
+  * Fix the bug of player BS
+  * Git: framework/uifw/voice/tts
+  * Tag: tts_0.1.1-37slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 16 Aug 2012 11:30:47 +0900
+
+tts (0.1.1-36slp2+1) unstable; urgency=low
+
+  * Update Setting API for async init
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-36slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 06 Aug 2012 19:30:59 +0900
+
+tts (0.1.1-35slp2+1) unstable; urgency=low
+
+  * Remove fd write option of dbus in client lib
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-35slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 31 Jul 2012 10:17:11 +0900
+
+tts (0.1.1-34slp2+1) unstable; urgency=low
+
+  * Fix the bug of setting client management
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-34slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 24 Jul 2012 13:47:43 +0900
+
+tts (0.1.1-33slp2+1) unstable; urgency=low
+
+  * Update API for async init
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-33slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 04 Jun 2012 19:48:29 +0900
+
+tts (0.1.1-32slp2+1) unstable; urgency=low
+
+  * Add config file
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-32slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 24 May 2012 14:50:30 +0900
+
+tts (0.1.1-31slp2+1) unstable; urgency=low
+
+  * update config not to depend on VConf
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-31slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 18 May 2012 18:56:19 +0900
+
+tts (0.1.1-30slp2+1) unstable; urgency=low
+
+  * fix bug about fork daemon
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-30slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 26 Mar 2012 15:48:37 +0900
+
+tts (0.1.1-29slp2+1) unstable; urgency=low
+
+  * udpate changelog
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-29slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 19 Mar 2012 19:20:22 +0900
+
+tts (0.1.1-28slp2+1) unstable; urgency=low
+
+  * udpate setting api
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-28slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 19 Mar 2012 11:37:32 +0900
+
+tts (0.1.1-27slp2+1) unstable; urgency=low
+
+  * fix IPC bug
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-27slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 14 Mar 2012 16:14:08 +0900
+
+tts (0.1.1-26slp2+1) unstable; urgency=low
+
+  * beta release
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-26slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 17 Feb 2012 17:42:12 +0900
+
+tts (0.1.1-25slp2+1) unstable; urgency=low
+
+  * fix player bug and update doxygen
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-25slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 17 Feb 2012 10:45:28 +0900
+
+tts (0.1.1-24slp2+1) unstable; urgency=low
+
+  * update engine api
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-24slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 05 Jan 2012 15:53:48 +0900
+
+tts (0.1.1-23slp2+1) unstable; urgency=low
+
+  * update changelog
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-23slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 19 Dec 2011 13:50:50 +0900
+
+tts (0.1.1-22slp2+1) unstable; urgency=low
+
+  * code cleanup and update log 
+  * Git: slp/pkgs/t/tts
+  * Tag: tts_0.1.1-22slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 16 Dec 2011 15:56:08 +0900
+
+tts (0.1.1-21slp2+1) unstable; urgency=low
+
+  * code cleanup and update log 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-21slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 06 Dec 2011 19:01:19 +0900
+
+tts (0.1.1-20slp2+1) unstable; urgency=low
+
+  * change boiler plate 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-20slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 02 Dec 2011 10:52:46 +0900
+
+tts (0.1.1-19slp2+1) unstable; urgency=low
+
+  * update for connman 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-19slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 29 Nov 2011 16:14:14 +0900
+
+tts (0.1.1-18slp2+1) unstable; urgency=low
+
+  * bug fix about unref message
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-18slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 23 Nov 2011 15:34:46 +0900
+
+tts (0.1.1-17slp2+1) unstable; urgency=low
+
+  * update API : change sync function and use add_text in 'Play' state
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-17slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 16 Nov 2011 11:28:03 +0900
+
+tts (0.1.1-16slp2+1) unstable; urgency=low
+
+  * update Setting API 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-16slp2+1 
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 01 Nov 2011 11:24:58 +0900
+
+tts (0.1.1-15slp2+1) unstable; urgency=low
+
+  * update API doxygen and fix bug about initial default voice 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-15slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 27 Oct 2011 11:06:49 +0900
+
+tts (0.1.1-14slp2+1) unstable; urgency=low
+
+  * change API for SDK release
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-14slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 21 Oct 2011 16:42:51 +0900
+
+tts (0.1.1-13slp2+1) unstable; urgency=low
+
+  * update API's new callback 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-13slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Thu, 20 Oct 2011 17:49:13 +0900
+
+tts (0.1.1-12slp2+1) unstable; urgency=low
+
+  * update new API for sdk release and change boilerplate
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-12slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 19 Oct 2011 16:31:50 +0900
+
+tts (0.1.1-11slp2+1) unstable; urgency=low
+
+  * update bug of prevent and remove dependency of gtk
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-11slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Wed, 07 Sep 2011 14:47:34 +0900
+
+tts (0.1.1-10slp2+1) unstable; urgency=low
+
+  * update build file
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-10slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 19 Jul 2011 16:15:13 +0900
+
+tts (0.1.1-9slp2+1) unstable; urgency=low
+
+  * update build file
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-9slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 18 Jul 2011 10:27:52 +0900
+
+tts (0.1.1-8slp2+1) unstable; urgency=low
+
+  * Change IPC and Code Cleanup
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-8slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 15 Jul 2011 18:01:31 +0900
+
+tts (0.1.1-7slp2+1) unstable; urgency=low
+
+  * support multi instance 
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-7slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Fri, 24 Jun 2011 14:36:36 +0900
+
+tts (0.1.1-6slp2+1) unstable; urgency=low
+
+  * fix defect from prevent
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-6slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Tue, 07 Jun 2011 17:05:49 +0900
+
+tts (0.1.1-5slp2+1) unstable; urgency=low
+
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-5slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 23 May 2011 15:14:10 +0900
+
+tts (0.1.1-4slp2+1) unstable; urgency=low
+
+  * Change API - change error code
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-4slp2+1
+
+ -- Dongyeol Lee <dy3.lee@samsung.com>  Mon, 23 May 2011 09:00:57 +0900
+
+tts (0.1.1-3slp2+1) unstable; urgency=low
+
+  * change control file
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-3slp2+1
+
+ -- Jae-Yong Lee <jaeyong911.lee@samsung.com>  Mon, 16 May 2011 10:45:01 +0900
+
+tts (0.1.1-2slp2+1) unstable; urgency=low
+
+  * Initial Release (change files to unix type).
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-2slp2+1
+
+ -- Jae-Yong Lee <jaeyong911.lee@samsung.com>  Mon, 16 May 2011 10:11:02 +0900
+
+tts (0.1.1-1slp2+1) unstable; urgency=low
+
+  * Initial Release.
+  * Git: 165.213.180.234:slp/pkgs/t/tts
+  * Tag: tts_0.1.1-1slp2+1
+
+ -- Jae-Yong Lee <jaeyong911.lee@samsung.com>  Fri, 13 May 2011 16:15:22 +0900

@@ -1,0 +1,14 @@
+tts-server dbus rw
+tts-server device::app_logging wx
+tts-server pulseaudio rwxat
+tts-server sound_server rw
+tts-server system::homedir rwxat
+tts-server system::share rwxat
+tts-server system::use_internet rw
+tts-server system::vconf rwx
+tts-server system::vconf_inhouse rwx
+tts-server system::vconf_multimedia rwx
+tts-server system::vconf_network rwx
+tts-server system::vconf_system rwx
+tts-server sys-assert::core rwxat
+system::use_internet tts-server w
