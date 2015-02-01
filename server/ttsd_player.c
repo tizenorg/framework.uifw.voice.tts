@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -13,8 +13,7 @@
 
 #include <audio_io.h>
 #include <Ecore.h>
-#include <mm_session.h>
-#include <mm_error.h>
+#include <sound_manager.h>
 
 #include "ttsd_main.h"
 #include "ttsd_player.h"
@@ -308,10 +307,10 @@ static void __play_thread(void *data, Ecore_Thread *thread)
 		}
 
 		while (APP_STATE_PLAYING == player->state || APP_STATE_PAUSED == player->state) {
-			if (idx >= wdata.data_size)
+			if ((unsigned int)idx >= wdata.data_size)
 				break;
 
-			if (idx + SOUND_BUFFER_LENGTH > wdata.data_size) {
+			if ((unsigned int)idx + SOUND_BUFFER_LENGTH > wdata.data_size) {
 				len = wdata.data_size - idx;
 			} else {
 				len = SOUND_BUFFER_LENGTH;
@@ -329,7 +328,8 @@ static void __play_thread(void *data, Ecore_Thread *thread)
 				g_audio_state = AUDIO_STATE_PLAY;
 			}
 
-			ret = audio_out_write(g_audio_h, &wdata.data[idx], len);
+			char* temp_data = wdata.data;
+			ret = audio_out_write(g_audio_h, &temp_data[idx], len);
 			if (0 > ret) {
 				SLOG(LOG_WARN, get_tag(), "[Player WARNING] Fail to audio write - %d", ret);
 			} else {
@@ -405,24 +405,31 @@ static void __play_thread(void *data, Ecore_Thread *thread)
 /*
 * Player Interfaces 
 */
-
 int ttsd_player_init()
 {
 	g_playing_info = NULL;
 	g_audio_state = AUDIO_STATE_NONE;
 	g_audio_h = NULL;
 	
+	int ret;
+
 	if (TTSD_MODE_DEFAULT == ttsd_get_mode()) {
-		if (MM_ERROR_NONE != mm_session_init(MM_SESSION_TYPE_EXCLUSIVE)) {
-			SLOG(LOG_ERROR, get_tag(), "[Player ERROR] Fail mm_session_init(MM_SESSION_TYPE_EXCLUSIVE)");	
+		ret = sound_manager_set_session_type(SOUND_SESSION_TYPE_MEDIA);
+		if (0 != ret) {
+			SLOG(LOG_ERROR, get_tag(), "[Player ERROR] Fail to set session type");
+		}
+		
+		ret = sound_manager_set_media_session_option(SOUND_SESSION_OPTION_PAUSE_OTHERS_WHEN_START, SOUND_SESSION_OPTION_INTERRUPTIBLE_DURING_PLAY);
+		if (0 != ret) {
+			SLOG(LOG_ERROR, get_tag(), "[Player ERROR] Fail set media session option");	
 		} else {
-			SLOG(LOG_DEBUG, get_tag(), "[Player SUCCESS] mm_session_init(MM_SESSION_TYPE_EXCLUSIVE)");	
+			SLOG(LOG_DEBUG, get_tag(), "[Player SUCCESS] set media session option");	
 		}
 	}
 
 	ecore_thread_max_set(1);
 		
-	int ret = __create_audio_out(TTSP_AUDIO_TYPE_RAW_S16, 16000);
+	ret = __create_audio_out(TTSP_AUDIO_TYPE_RAW_S16, 16000);
 	if (0 != ret)
 		return -1;
 
@@ -438,9 +445,32 @@ int ttsd_player_release(void)
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
-	int ret = __destroy_audio_out();
+	int ret;
+
+	ret = __destroy_audio_out();
 	if (0 != ret)
 		return -1;
+
+	SLOG(LOG_DEBUG, get_tag(), "[Player DEBUG] ==========================");
+	SLOG(LOG_DEBUG, get_tag(), "[Player DEBUG] Active thread count : %d", ecore_thread_active_get());
+	SLOG(LOG_DEBUG, get_tag(), "[Player DEBUG] ==========================");
+
+	/* The thread should be released */
+	int thread_count = ecore_thread_active_get();
+	int count = 0;
+	while (0 < thread_count) {
+		usleep(10);
+
+		count++;
+		if (100 == count) {
+			SLOG(LOG_WARN, get_tag(), "[Player WARNING!!] Thread is blocked. Player release continue.");
+			break;
+		}
+
+		thread_count = ecore_thread_active_get();
+	}
+
+	SLOG(LOG_DEBUG, get_tag(), "[Player DEBUG] Thread is released");
 
 	/* clear g_player_list */
 	g_playing_info = NULL;
@@ -530,8 +560,6 @@ int ttsd_player_destroy_instance(int uid)
 
 int ttsd_player_play(int uid)
 {
-	SECURE_SLOG(LOG_DEBUG, get_tag(), "[Player] start play : uid(%d)", uid );
-
 	if (false == g_player_init) {
 		SLOG(LOG_ERROR, get_tag(), "[Player ERROR] Not Initialized" );
 		return -1;
@@ -539,10 +567,12 @@ int ttsd_player_play(int uid)
 
 	if (NULL != g_playing_info) {
 		if (uid == g_playing_info->uid) {
-			SECURE_SLOG(LOG_WARN, get_tag(), "[Player WARNING] uid(%d) has already played", g_playing_info->uid);
+			SECURE_SLOG(LOG_DEBUG, get_tag(), "[Player] uid(%d) has already played", g_playing_info->uid);
 			return 0;
 		}
 	}
+
+	SECURE_SLOG(LOG_DEBUG, get_tag(), "[Player] start play : uid(%d)", uid );
 
 	/* Check sound queue size */
 	if (0 == ttsd_data_get_sound_data_size(uid)) {
@@ -561,6 +591,8 @@ int ttsd_player_play(int uid)
 	current->state = APP_STATE_PLAYING;
 	
 	g_playing_info = current;
+
+	SLOG(LOG_DEBUG, get_tag(), "[Player DEBUG] Active thread count : %d", ecore_thread_active_get());
 
 	if (0 < ttsd_data_get_sound_data_size(current->uid)) {
 		SLOG(LOG_DEBUG, get_tag(), "[Player] Run thread");

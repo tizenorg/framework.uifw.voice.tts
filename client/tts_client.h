@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -23,15 +23,6 @@
 extern "C" {
 #endif
 
-
-/** 
-* @brief Enumerations of sound type.
-*/
-typedef enum {
-	TTS_SOUND_TYPE_NORMAL = 0,	/**< Normal volume type */
-	TTS_SOUND_TYPE_FIXED_MAX_VOLUME	/**< Max volume type */
-}tts_sound_type_e;
-
 typedef struct {
 	/* base info */
 	tts_h	tts;
@@ -52,8 +43,6 @@ typedef struct {
 	void*				default_voice_changed_user_data;
 	tts_supported_voice_cb		supported_voice_cb;
 	void*				supported_voice_user_data;
-
-	tts_sound_type_e	sound_type;
 
 	/* mode / state */
 	tts_mode_e	mode;

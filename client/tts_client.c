@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -37,9 +37,9 @@ static int __client_generate_uid(int pid)
 int tts_client_new(tts_h* tts)
 {
 	tts_client_s* client = NULL;
-	client = (tts_client_s*)g_malloc0 (sizeof(tts_client_s));
+	client = (tts_client_s*)calloc(1, sizeof(tts_client_s));
 
-	tts_h temp = (tts_h)g_malloc0(sizeof(struct tts_s));
+	tts_h temp = (tts_h)calloc(1, sizeof(struct tts_s));
 	temp->handle = __client_generate_uid(getpid()); 
 
 	/* initialize client data */
@@ -63,7 +63,6 @@ int tts_client_new(tts_h* tts)
 	client->supported_voice_cb = NULL;
 	client->supported_voice_user_data = NULL;
 
-	client->sound_type = TTS_SOUND_TYPE_NORMAL;
 	client->mode = TTS_MODE_DEFAULT;
 	client->before_state = TTS_STATE_CREATED; 
 	client->current_state = TTS_STATE_CREATED; 

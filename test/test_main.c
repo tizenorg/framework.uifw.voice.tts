@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -16,17 +16,61 @@
 
 #include <tts.h>
 
-static tts_h g_tts;
+#define TTS_STRDUP(src) 		((src != NULL) ? strdup(src) : NULL )
 
-static char g_text[3000] = {0, };
+static tts_h g_tts;
+static char* g_text = NULL;
 
 Eina_Bool __tts_test_destroy(void *data);
+
+static bool __tts_test_get_text_from_file(const char* path, char** text)
+{
+	if(!path) return 0;
+	if(!text) return 0;
+
+	FILE *fp = NULL;
+
+	if((fp = fopen(path, "rb")) == NULL ) {
+		printf("Fail to open file (%s)", path);
+		return 0;
+	}
+
+	fseek(fp , 0 , SEEK_END);  
+	
+	int text_len = ftell(fp);
+	if (0 >= text_len) {
+		printf("File has no contents\n");
+		fclose(fp);
+		return 0;
+	}
+	printf("text_len(%d)\n", text_len);
+	rewind(fp);
+
+	*text = (char*)calloc(1, text_len+1);
+
+	int result_len = 1;
+	while (!feof(fp)) {
+		result_len = fread(*text, sizeof(char), text_len, fp);
+		if (result_len != text_len) {
+			printf("Fail to read\n");
+			break;
+		}
+	}
+	*text[result_len] = '\0';
+
+	fclose(fp);
+	return 1;
+}
 
 Eina_Bool __tts_test_play(void *data)
 {
 	int utt_id;
 	int ret;
-	ret = tts_add_text(g_tts, g_text, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &utt_id);
+	char* lang = NULL;
+
+	lang = (char*)data;
+	
+	ret = tts_add_text(g_tts, g_text, lang, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &utt_id);
 	if (TTS_ERROR_NONE != ret) {
 		printf("Fail to add text\n");
 		ecore_timer_add(0, __tts_test_destroy, NULL);
@@ -97,32 +141,72 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
 
 int main (int argc, char *argv[])
 {
-	if (1 == argc || 3 < argc) {
+	if (1 == argc || 5 < argc) {
 		printf("Please check parameter\n");
 		printf("Ex> tts-test 'text'\n");
 		printf("Specific mode> tts-test 'text' '-sr || -noti'\n");
 		return 0;
 	}
 
-	if (NULL != argv[1]) {
-		memset(g_text, 0, 3000);
-		strncpy(g_text, argv[1], 3000);
+	char* lang = NULL;
+	char* src_path = NULL;
+
+	int n = 0;
+
+	while(NULL != argv[n]) {
+
+		if(!strcmp("-h", argv[n])) {
+			printf("\n");
+			printf(" ==========================================\n");
+			printf("  TTS test usage\n");
+			printf(" ==========================================\n\n");
+			printf("  -t : Synthesize text \n");
+			printf("  -l : Determine langage to synthesize text, ex) en_US, ko_KR ...\n");
+			printf("  -f : Determine file path which include text\n\n");
+			printf(" ***************************************************\n");
+			printf("    Example : #tts-test -l en_US -t \"1 2 3 4\" \n");
+			printf(" ***************************************************\n");
+			printf("\n");
+			return 0;
+		}
+		
+		// check langage option
+		if(!strcmp("-l", argv[n])) {
+			lang = TTS_STRDUP(argv[n+1]);
+			printf("Language : %s\n", lang);
+		}
+		// check text to synthesize
+		else if (!strcmp("-t", argv[n])) {
+			g_text = TTS_STRDUP(argv[n+1]);
+			printf("Text : %s\n", g_text);
+		}
+		// check file path to synthesize
+		else if (!strcmp("-f", argv[n])) {
+			src_path = TTS_STRDUP(argv[n+1]);
+			printf("File path : %s\n", src_path);
+			if(!__tts_test_get_text_from_file(src_path, &g_text)) {
+				return 0;
+			}
+		}
+		n++;
+	}
+	
+	if(!g_text && !src_path) {
+		printf("Invalid parameter, check help with command tts-test -h");
+		return 0;
 	}
 
+//===================================
+
 	tts_mode_e mode = TTS_MODE_DEFAULT;
-	if (NULL != argv[2]) {
-		if (!strcmp("-sr", argv[2])) {
-			mode = TTS_MODE_SCREEN_READER;
-		} else if (!strcmp("-noti", argv[2])) {
-			mode = TTS_MODE_NOTIFICATION;
-		}
-	}
 
 	printf("  ");
 	printf("  ");
 	printf("===== TTS Sample start =====\n");
 
-	printf("Input text : %s\n", g_text);
+	printf("Input text : %s\n", g_text ? g_text : "NULL");
+	printf("Input lang : %s\n", lang ? lang : "NULL");
+	printf("Input file path : %s\n", src_path ? src_path : "NULL");
 
 	if (!ecore_init()) {
 		printf("[Main ERROR] Fail ecore_init()\n");
@@ -147,7 +231,7 @@ int main (int argc, char *argv[])
 	}
 
 	printf("Set Callback func\n");
-	ret = tts_set_state_changed_cb(g_tts, __tts_test_state_changed_cb, NULL);
+	ret = tts_set_state_changed_cb(g_tts, __tts_test_state_changed_cb, (void*)lang);
 	if (TTS_ERROR_NONE != ret) {
 		printf("Fail to set state changed cb\n");
 		tts_destroy(g_tts);
@@ -180,7 +264,11 @@ int main (int argc, char *argv[])
 
 	ecore_shutdown();
 
+	if(src_path) free(src_path);
+	if(lang) free(lang);
+	if(g_text) free(g_text);
+
 	printf("===== TTS END =====\n\n\n");
 
-	return;
+	return 0;
 }

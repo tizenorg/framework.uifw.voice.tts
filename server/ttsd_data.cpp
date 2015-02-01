@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -19,8 +19,8 @@ using namespace std;
 
 typedef struct 
 {
-	char*			lang;
-	ttsp_voice_type_e	vctype;
+	char*	lang;
+	int	vctype;
 }used_voice_s;
 
 typedef struct 
@@ -29,7 +29,6 @@ typedef struct
 	int		uid;
 	int		utt_id_stopped;
 	app_state_e	state;
-	ttsd_sound_type_e	sound_type;
 
 	std::vector<speak_data_s> m_speak_data;
 	std::vector<sound_data_s> m_wav_data;
@@ -134,7 +133,6 @@ int ttsd_data_new_client(int pid, int uid)
 	app.uid = uid;
 	app.utt_id_stopped = 0;
 	app.state = APP_STATE_READY;
-	app.sound_type = TTSD_SOUND_TYPE_NORMAL;
 
 	g_app_list.insert( g_app_list.end(), app);
 
@@ -214,7 +212,7 @@ int ttsd_data_get_speak_data_size(int uid)
 	return size;
 }
 
-int ttsd_data_set_used_voice(int uid, const char* lang, ttsp_voice_type_e type)
+int ttsd_data_set_used_voice(int uid, const char* lang, int type)
 {
 	int index = 0;
 	index = ttsd_data_is_client(uid);
@@ -486,42 +484,6 @@ int ttsd_data_set_client_state(int uid, app_state_e state)
 	return TTSD_ERROR_NONE;
 }
 
-int ttsd_data_set_client_sound_type(int uid, ttsd_sound_type_e type)
-{
-	int index = 0;
-	index = ttsd_data_is_client(uid);
-
-	if (index < 0)	{
-		SECURE_SLOG(LOG_ERROR, get_tag(), "[DATA ERROR] uid is not valid (%d)", uid);	
-		return TTSD_ERROR_INVALID_PARAMETER;
-	}
-
-	g_app_list[index].sound_type = type;
-
-	return 0;
-}
-
-int ttsd_data_get_client_sound_type(int uid, ttsd_sound_type_e* type)
-{
-	if (NULL == type) {
-		SECURE_SLOG(LOG_ERROR, get_tag(), "[DATA ERROR] Input parameter is NULL (%d)", uid);	
-		return TTSD_ERROR_INVALID_PARAMETER;
-	}
-
-	int index = 0;
-	index = ttsd_data_is_client(uid);
-
-	if (index < 0)	{
-		SECURE_SLOG(LOG_ERROR, get_tag(), "[DATA ERROR] uid is not valid (%d)", uid);	
-		return TTSD_ERROR_INVALID_PARAMETER;
-	}
-
-	*type = g_app_list[index].sound_type;
-
-	return 0;
-}
-
-
 int ttsd_data_get_current_playing()
 {
 	int vsize = g_app_list.size();
@@ -663,38 +625,5 @@ int ttsd_data_save_error_log(int uid, FILE* fp)
 	}
 	fprintf(fp, "---------------------");
 	
-	return 0;
-}
-
-typedef struct 
-{
-	bool is_set;
-	int uid;
-	int uttid;
-	int error_code;
-}error_data_s;
-
-static error_data_s g_error;
-
-int ttsd_data_set_error_data(int uid, int uttid, int error_code)
-{
-	g_error.uid = uid;
-	g_error.uttid = uttid;
-	g_error.error_code = error_code;
-	g_error.is_set = true;
-	return 0;
-}
-
-int ttsd_data_get_error_data(int* uid, int* uttid, int* error_code)
-{
-	if (false == g_error.is_set) {
-		return -1;
-	}
-
-	*uid = g_error.uid;
-	*uttid = g_error.uttid;
-	*error_code = g_error.error_code;
-
-	g_error.is_set = false;
 	return 0;
 }

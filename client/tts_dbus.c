@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -62,6 +62,11 @@ static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handle
 	DBusMessage* msg = NULL;
 	msg = dbus_connection_pop_message(conn);
 
+	if (true != dbus_connection_get_is_connected(conn)) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Connection is disconnected");
+		return ECORE_CALLBACK_RENEW;
+	}
+
 	/* loop again if we haven't read a message */
 	if (NULL == msg) { 
 		return ECORE_CALLBACK_RENEW;
@@ -119,69 +124,6 @@ static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handle
 		SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 		SLOG(LOG_DEBUG, TAG_TTSC, " ");
 	} /* TTSD_METHOD_HELLO */
-
-#if 0
-	else if (dbus_message_is_method_call(msg, if_name, TTSD_METHOD_UTTERANCE_STARTED)) {
-		SLOG(LOG_DEBUG, TAG_TTSC, "===== Get utterance started");
-		int uid, uttid;
-		dbus_message_get_args(msg, &err,
-			DBUS_TYPE_INT32, &uid,
-			DBUS_TYPE_INT32, &uttid,
-			DBUS_TYPE_INVALID);
-
-		if (dbus_error_is_set(&err)) { 
-			SLOG(LOG_ERROR, TAG_TTSC, "<<<< Get Utterance started - Get arguments error (%s)", err.message);
-			dbus_error_free(&err); 
-		} else {
-			SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "<<<< Get Utterance started message : uid(%d), uttid(%d)", uid, uttid);
-			__tts_cb_utt_started(uid, uttid);
-		}
-
-		SLOG(LOG_DEBUG, TAG_TTSC, "=====");
-		SLOG(LOG_DEBUG, TAG_TTSC, " ");
-	}/* TTS_SIGNAL_UTTERANCE_STARTED */
-
-	else if (dbus_message_is_method_call(msg, if_name, TTSD_METHOD_UTTERANCE_COMPLETED)) {
-		SLOG(LOG_DEBUG, TAG_TTSC, "===== Get utterance completed");
-		int uid, uttid;
-		dbus_message_get_args(msg, &err,
-			DBUS_TYPE_INT32, &uid,
-			DBUS_TYPE_INT32, &uttid,
-			DBUS_TYPE_INVALID);
-
-		if (dbus_error_is_set(&err)) { 
-			SLOG(LOG_ERROR, TAG_TTSC, "<<<< Get Utterance completed - Get arguments error (%s)", err.message);
-			dbus_error_free(&err); 
-		} else {
-			SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "<<<< Get Utterance completed message : uid(%d), uttid(%d)", uid, uttid);
-			__tts_cb_utt_completed(uid, uttid);
-		}
-
-		SLOG(LOG_DEBUG, TAG_TTSC, "=====");
-		SLOG(LOG_DEBUG, TAG_TTSC, " ");
-	}/* TTS_SIGNAL_UTTERANCE_COMPLETED */
-
-	else if (dbus_message_is_method_call(msg, if_name, TTSD_METHOD_SET_STATE)) {
-		SLOG(LOG_DEBUG, TAG_TTSC, "===== Get state changed callback");
-		int uid;
-		int state;
-		dbus_message_get_args(msg, &err,
-			DBUS_TYPE_INT32, &uid,
-			DBUS_TYPE_INT32, &state,
-			DBUS_TYPE_INVALID);
-
-		if (dbus_error_is_set(&err)) { 
-			SLOG(LOG_ERROR, TAG_TTSC, "<<<< Get state change - Get arguments error (%s)", err.message);
-			dbus_error_free(&err); 
-		} else {
-			SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "<<<< Get state change : uid(%d) , state(%d)", uid, state);
-			__tts_cb_set_state(uid, state);
-		}
-
-		SLOG(LOG_DEBUG, TAG_TTSC, "=====");
-		SLOG(LOG_DEBUG, TAG_TTSC, " ");
-	} /* TTSD_METHOD_SET_STATE */
-#endif
 
 	else if (dbus_message_is_method_call(msg, if_name, TTSD_METHOD_ERROR)) {
 		SLOG(LOG_DEBUG, TAG_TTSC, "===== Get error callback");
@@ -531,64 +473,6 @@ int tts_dbus_request_finalize(int uid)
 	return result;
 }
 
-int tts_dbus_set_sound_type(int uid, int type)
-{
-	DBusMessage* msg;
-	DBusError err;
-	dbus_error_init(&err);
-
-	msg = __tts_dbus_make_message(uid, TTS_METHOD_SET_SOUND_TYPE);
-
-	if (NULL == msg) { 
-		SLOG(LOG_ERROR, TAG_TTSC, ">>>> Request tts set sound type : Fail to make message"); 
-		return TTS_ERROR_OPERATION_FAILED;
-	} else {
-		SECURE_SLOG(LOG_DEBUG, TAG_TTSC, ">>>> Request tts set sound type : uid(%d) type(%d)", uid, type);
-	}
-	
-	if (true != dbus_message_append_args(msg, DBUS_TYPE_INT32, &uid, DBUS_TYPE_INT32, &type, DBUS_TYPE_INVALID)) {
-		dbus_message_unref(msg);
-		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Fail to append args"); 
-
-		return TTS_ERROR_OPERATION_FAILED;
-	}
-
-	DBusMessage* result_msg;
-	int result = TTS_ERROR_OPERATION_FAILED;
-
-	result_msg = dbus_connection_send_with_reply_and_block(g_conn, msg, WAITING_TIME, &err);
-	dbus_message_unref(msg);
-	if (dbus_error_is_set(&err)) {
-		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Send error (%s)", err.message);
-		dbus_error_free(&err);
-	}
-
-	if (NULL != result_msg) {
-		dbus_message_get_args(result_msg, &err,
-			DBUS_TYPE_INT32, &result,
-			DBUS_TYPE_INVALID);
-
-		if (dbus_error_is_set(&err)) { 
-			SLOG(LOG_ERROR, TAG_TTSC, "<<<< tts play : Get arguments error (%s)", err.message);
-			dbus_error_free(&err); 
-			result = TTS_ERROR_OPERATION_FAILED;
-		}
-		dbus_message_unref(result_msg);
-
-		if (0 == result) {
-			SLOG(LOG_DEBUG, TAG_TTSC, "<<<< tts set sound type : result(%d)", result);
-		} else {
-			SLOG(LOG_ERROR, TAG_TTSC, "<<<< tts set sound type : result(%d)", result);
-		}
-	} else {
-		SLOG(LOG_ERROR, TAG_TTSC, "<<<< Result message is NULL ");
-		tts_dbus_reconnect();
-		result = TTS_ERROR_TIMED_OUT;
-	}
-
-	return result;
-}
-
 int tts_dbus_request_add_text(int uid, const char* text, const char* lang, int vctype, int speed, int uttid)
 {
 	if (NULL == text || NULL == lang) {
@@ -849,18 +733,16 @@ static int __check_file(int mode)
 		return -1;
 	}
 
-	char buffer[sizeof(struct inotify_event)];
-	memset(buffer, 0, (sizeof(struct inotify_event)));
+	struct inotify_event event;
+	memset(&event, '\0', sizeof(struct inotify_event));
 
-	length = read(temp_fd, buffer, (sizeof(struct inotify_event)));
+	length = read(temp_fd, &event, sizeof(struct inotify_event));
 	if (0 > length) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[File message] Empty Inotify event");
 		return ECORE_CALLBACK_DONE;
 	}
 
-	struct inotify_event *event = (struct inotify_event *)&buffer;
-
-	if (IN_MODIFY != event->mask) {
+	if (IN_MODIFY != event.mask) {
 		SLOG(LOG_WARN, TAG_TTSC, "[File message] Undefined event");
 		return ECORE_CALLBACK_PASS_ON;
 	}
@@ -924,7 +806,7 @@ static int __check_file(int mode)
 		if (false == is_empty_file) {
 			fp = fopen(filename, "w+");
 			if (NULL == fp) {
-				SLOG(LOG_ERROR, TAG_TTSC, "[File message ERROR] Fail to make new file : messge(%s)", strerror(errno));
+				SLOG(LOG_ERROR, TAG_TTSC, "[File message ERROR] Fail to make new file");
 			} else {
 				fclose(fp);
 			}

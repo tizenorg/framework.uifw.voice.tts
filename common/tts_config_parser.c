@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -12,10 +12,13 @@
 */
 
 #include <dlog.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <vconf.h>
 
-#include "tts_defs.h"
 #include "tts_config_parser.h"
+#include "tts_defs.h"
 
 
 #define TTS_TAG_ENGINE_BASE_TAG		"tts-engine"
@@ -83,7 +86,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 
 	/* alloc engine info */
 	tts_engine_info_s* temp;
-	temp = (tts_engine_info_s*)malloc(sizeof(tts_engine_info_s));
+	temp = (tts_engine_info_s*)calloc(1, sizeof(tts_engine_info_s));
 
 	temp->name = NULL;
 	temp->uuid = NULL;
@@ -95,6 +98,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 		if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_ENGINE_NAME)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->name)	free(temp->name);
 				temp->name = strdup((char*)key);
 				xmlFree(key);
 			} else {
@@ -103,6 +107,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_ENGINE_ID)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->uuid)	free(temp->uuid);
 				temp->uuid = strdup((char*)key);
 				xmlFree(key);
 			} else {
@@ -111,6 +116,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_ENGINE_SETTING)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->setting)	free(temp->setting);
 				temp->setting = strdup((char*)key);
 				xmlFree(key);
 			} else {
@@ -123,7 +129,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 			while (NULL != voice_node) {
 				if (0 == xmlStrcmp(voice_node->name, (const xmlChar *)TTS_TAG_ENGINE_VOICE)) {
 
-					tts_config_voice_s* temp_voice = (tts_config_voice_s*)malloc(sizeof(tts_config_voice_s));
+					tts_config_voice_s* temp_voice = (tts_config_voice_s*)calloc(1, sizeof(tts_config_voice_s));
 
 					attr = xmlGetProp(voice_node, (const xmlChar*)TTS_TAG_ENGINE_VOICE_TYPE);
 					if (NULL != attr) {
@@ -143,6 +149,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 
 					key = xmlNodeGetContent(voice_node);
 					if (NULL != key) {
+						if (NULL != temp_voice->language)	free(temp_voice->language);
 						temp_voice->language = strdup((char*)key);
 						xmlFree(key);
 					} else {
@@ -156,7 +163,7 @@ int tts_parser_get_engine_info(const char* path, tts_engine_info_s** engine_info
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_ENGINE_PITCH_SUPPORT)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
-				if (0 == xmlStrcmp(attr, (const xmlChar *)"true")) {
+				if (0 == xmlStrcmp(key, (const xmlChar *)"true")) {
 					temp->pitch_support = true;
 				}
 				xmlFree(key);
@@ -264,14 +271,29 @@ int tts_parser_load_config(tts_config_s** config_info)
 	xmlChar *key;
 	bool is_default_open = false;
 
-	doc = xmlParseFile(TTS_CONFIG);
-	if (doc == NULL) {
+	if (0 != access(TTS_CONFIG, F_OK)) {
 		doc = xmlParseFile(TTS_DEFAULT_CONFIG);
 		if (doc == NULL) {
 			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to parse file error : %s", TTS_DEFAULT_CONFIG);
 			return -1;
 		}
 		is_default_open = true;
+	} else {
+		int retry_count = 0;
+
+		while (NULL == doc) {
+			doc = xmlParseFile(TTS_CONFIG);
+			if (NULL != doc) {
+				break;
+			}
+			retry_count++;
+			usleep(1000);
+
+			if (100 == retry_count) {
+				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to parse file error : %s", TTS_CONFIG);
+				return -1;
+			}
+		}
 	}
 
 	cur = xmlDocGetRootElement(doc);
@@ -296,7 +318,7 @@ int tts_parser_load_config(tts_config_s** config_info)
 
 	/* alloc engine info */
 	tts_config_s* temp;
-	temp = (tts_config_s*)malloc(sizeof(tts_config_s));
+	temp = (tts_config_s*)calloc(1, sizeof(tts_config_s));
 
 	temp->engine_id = NULL;
 	temp->setting = NULL;
@@ -306,6 +328,7 @@ int tts_parser_load_config(tts_config_s** config_info)
 		if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_ENGINE_ID)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->engine_id)	free(temp->engine_id);
 				temp->engine_id = strdup((char*)key);
 				xmlFree(key);
 			} else {
@@ -314,6 +337,7 @@ int tts_parser_load_config(tts_config_s** config_info)
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_ENGINE_SETTING)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->setting)	free(temp->setting);
 				temp->setting = strdup((char*)key);
 				xmlFree(key);
 			} else {
@@ -357,47 +381,17 @@ int tts_parser_load_config(tts_config_s** config_info)
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_LANGUAGE)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
+				if (NULL != temp->language)	free(temp->language);
 				temp->language = strdup((char*)key);
 				xmlFree(key);
 			} else {
 				SLOG(LOG_ERROR, tts_tag(), "[ERROR] engine uuid is NULL");
 			}
 
-			if (true == is_default_open) {
-				/* Change default language to display language */
-				char* value;
-				value = vconf_get_str(VCONFKEY_LANGSET);
-
-				if (NULL != value) {
-					SLOG(LOG_DEBUG, tts_tag(), "[Config] System language : %s", value);
-					strncpy(temp->language, value, strlen(temp->language));
-					SLOG(LOG_DEBUG, tts_tag(), "[Config] Default language : %s", temp->language);
-					
-					xmlNodeSetContent(cur, (const xmlChar *)temp->language);
-					
-					free(value);
-				} else {
-					SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Fail to get system language");
-				}
-			}
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_SPEECH_RATE)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
-				if (0 == xmlStrcmp(key, (const xmlChar *)"1")) {
-					temp->speech_rate = 1;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"2")) {
-					temp->speech_rate = 2;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"3")) {
-					temp->speech_rate = 3;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"4")) {
-					temp->speech_rate = 4;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"5")) {
-					temp->speech_rate = 5;
-				} else {
-					SLOG(LOG_ERROR, tts_tag(), "[ERROR] Speech rate is NOT valid");
-					temp->speech_rate = 3;
-				}
-
+				temp->speech_rate = atoi((char*)key);
 				xmlFree(key);
 			} else {
 				SLOG(LOG_ERROR, tts_tag(), "[ERROR] speech rate is NULL");
@@ -405,21 +399,7 @@ int tts_parser_load_config(tts_config_s** config_info)
 		} else if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_PITCH)) {
 			key = xmlNodeGetContent(cur);
 			if (NULL != key) {
-				if (0 == xmlStrcmp(key, (const xmlChar *)"1")) {
-					temp->pitch = 1;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"2")) {
-					temp->pitch = 2;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"3")) {
-					temp->pitch = 3;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"4")) {
-					temp->pitch = 4;
-				} else if (0 == xmlStrcmp(key, (const xmlChar *)"5")) {
-					temp->pitch = 5;
-				} else {
-					SLOG(LOG_ERROR, tts_tag(), "[ERROR] Pitch is NOT valid");
-					temp->pitch = 3;
-				}
-
+				temp->pitch = atoi((char*)key);
 				xmlFree(key);
 			} else {
 				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Pitch is NULL");
@@ -439,6 +419,17 @@ int tts_parser_load_config(tts_config_s** config_info)
 		if (0 > ret) {
 			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Save result : %d", ret);
 		}
+
+		/* Set mode */
+		if (0 > chmod(TTS_CONFIG, 0666)) {
+			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to change file mode : %d", ret);
+		}
+
+		/* Set owner */
+		if (0 > chown(TTS_CONFIG, 5000, 5000)) {
+			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to change file owner : %d", ret);
+		}
+		SLOG(LOG_DEBUG, tts_tag(), "Default config is changed : pid(%d)", getpid());
 	}
 
 	return 0;
@@ -633,18 +624,15 @@ int tts_parser_set_speech_rate(int value)
 
 	while (cur != NULL) {
 		if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_SPEECH_RATE)) {
-			switch (value) {
-			case 1:	xmlNodeSetContent(cur, (const xmlChar *)"1");	break;
-			case 2:	xmlNodeSetContent(cur, (const xmlChar *)"2");	break;
-			case 3:	xmlNodeSetContent(cur, (const xmlChar *)"3");	break;
-			case 4:	xmlNodeSetContent(cur, (const xmlChar *)"4");	break;
-			case 5:	xmlNodeSetContent(cur, (const xmlChar *)"5");	break;
-			default:
-				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Speech rate is NOT valid : %d", value);
-				return -1;
-			}
+			char temp[10];
+			memset(temp, '\0', 10);
+			snprintf(temp, 10, "%d", value);
+
+			xmlNodeSetContent(cur, (const xmlChar *)temp);
+
+			SLOG(LOG_DEBUG, tts_tag(), "Set speech rate : %s", temp);
 			break;
-		} 
+		}
 
 		cur = cur->next;
 	}
@@ -679,16 +667,10 @@ int tts_parser_set_pitch(int value)
 
 	while (cur != NULL) {
 		if (0 == xmlStrcmp(cur->name, (const xmlChar *)TTS_TAG_CONFIG_PITCH)) {
-			switch (value) {
-			case 1:	xmlNodeSetContent(cur, (const xmlChar *)"1");	break;
-			case 2:	xmlNodeSetContent(cur, (const xmlChar *)"2");	break;
-			case 3:	xmlNodeSetContent(cur, (const xmlChar *)"3");	break;
-			case 4:	xmlNodeSetContent(cur, (const xmlChar *)"4");	break;
-			case 5:	xmlNodeSetContent(cur, (const xmlChar *)"5");	break;
-			default:
-				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Pitch is NOT valid : %d", value);
-				return -1;
-			}
+			char temp[10];
+			memset(temp, '\0', 10);
+			snprintf(temp, 10, "%d", value);
+			xmlNodeSetContent(cur, (const xmlChar *)temp);
 			break;
 		} 
 
@@ -718,10 +700,19 @@ int tts_parser_find_config_changed(char** engine, char**setting, bool* auto_voic
 	xmlChar *key_new;
 	xmlChar *key_old;
 
-	doc = xmlParseFile(TTS_CONFIG);
-	if (doc == NULL) {
-		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to parse file error : %s", TTS_CONFIG);
-		return -1;
+	int retry_count = 0;
+	while (NULL == doc) {
+		doc = xmlParseFile(TTS_CONFIG);
+		if (NULL != doc) {
+			break;
+		}
+		retry_count++;
+		usleep(1000);
+
+		if (100 == retry_count) {
+			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to parse file error : %s", TTS_CONFIG);
+			return -1;
+		}
 	}
 
 	cur_new = xmlDocGetRootElement(doc);
@@ -757,6 +748,7 @@ int tts_parser_find_config_changed(char** engine, char**setting, bool* auto_voic
 						if (0 != xmlStrcmp(key_old, key_new)) {
 							SLOG(LOG_DEBUG, tts_tag(), "Old engine id(%s), New engine(%s)", 
 								(char*)key_old, (char*)key_new);
+							if (NULL != *engine)	free(*engine);
 							*engine = strdup((char*)key_new);
 						}
 						xmlFree(key_new);
@@ -775,6 +767,7 @@ int tts_parser_find_config_changed(char** engine, char**setting, bool* auto_voic
 						if (0 != xmlStrcmp(key_old, key_new)) {
 							SLOG(LOG_DEBUG, tts_tag(), "Old engine setting(%s), New engine setting(%s)", 
 								(char*)key_old, (char*)key_new);
+							if (NULL != *setting)	free(*setting);
 							*setting = strdup((char*)key_new);
 						}
 						xmlFree(key_new);
@@ -815,6 +808,7 @@ int tts_parser_find_config_changed(char** engine, char**setting, bool* auto_voic
 						if (0 != xmlStrcmp(key_old, key_new)) {
 							SLOG(LOG_DEBUG, tts_tag(), "Old language(%s), New language(%s)", 
 								(char*)key_old, (char*)key_new);
+							if (NULL != *language)	free(*language);
 							*language = strdup((char*)key_new);
 						}
 						xmlFree(key_new);

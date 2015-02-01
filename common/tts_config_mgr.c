@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -22,11 +22,8 @@
 #include <vconf.h>
 
 #include "tts_config_mgr.h"
-#include "tts_defs.h"
 #include "tts_config_parser.h"
-
-#define EVENT_SIZE  (sizeof(struct inotify_event))
-#define BUF_LEN     (EVENT_SIZE + 16)
+#include "tts_defs.h"
 
 typedef struct {
 	int	uid;
@@ -49,6 +46,11 @@ static tts_config_s* g_config_info;
 static Ecore_Fd_Handler* g_config_fd_handler_noti = NULL;
 static int g_config_fd_noti;
 static int g_config_wd_noti;
+
+/* For engine directory monitoring */
+static Ecore_Fd_Handler* g_dir_fd_handler = NULL;
+static int g_dir_fd;
+static int g_dir_wd;
 
 int __tts_config_mgr_print_engine_info();
 
@@ -110,22 +112,21 @@ int __tts_config_mgr_check_engine_is_valid(const char* engine_id)
 		/*Get handle data from list*/
 		voice = iter_voice->data;
 		
-		if (NULL != voice) {
-			if (0 == strcmp(voice->language, g_config_info->language)) {
-				if (voice->type == g_config_info->type) {
-					/* language is valid */
-					is_valid_voice = true;
+		if (NULL != voice && NULL != g_config_info) {
+			if (NULL != voice->language && NULL != g_config_info->language) {
+				if (0 == strcmp(voice->language, g_config_info->language)) {
+					if (voice->type == g_config_info->type) {
+						/* language is valid */
+						is_valid_voice = true;
 
-					if (NULL != g_config_info->language) {
 						free(g_config_info->language);
-
 						g_config_info->language = strdup(voice->language);
 						g_config_info->type = voice->type;
 
 						SLOG(LOG_DEBUG, tts_tag(), "Default voice is changed : lang(%s) type(%d)", voice->language, voice->type);
 					}
+					break;
 				}
-				break;
 			}
 		}
 
@@ -267,8 +268,8 @@ int __tts_config_mgr_select_lang(const char* engine_id, char** language, int* ty
 		while (NULL != iter_voice) {
 			voice = iter_voice->data;
 			if (NULL != voice) {
-				/* Default language is en_GB */
-				if (0 == strcmp("en_GB", voice->language)) {
+				/* Default language */
+				if (0 == strcmp(TTS_BASE_LANGUAGE, voice->language)) {
 					*language = strdup(voice->language);
 					*type = voice->type;
 
@@ -279,24 +280,7 @@ int __tts_config_mgr_select_lang(const char* engine_id, char** language, int* ty
 			iter_voice = g_slist_next(iter_voice);
 		}
 
-		iter_voice = g_slist_nth(engine_info->voices, 0);
-
-		while (NULL != iter_voice) {
-			voice = iter_voice->data;
-			if (NULL != voice) {
-				/* Default language is en_US */
-				if (0 == strcmp("en_US", voice->language)) {
-					*language = strdup(voice->language);
-					*type = voice->type;
-
-					SECURE_SLOG(LOG_DEBUG, tts_tag(), "Selected language(%s) type(%d)", *language, *type);
-					return 0;
-				}
-			}
-			iter_voice = g_slist_next(iter_voice);
-		}
-
-		/* Not support en_GB or en_US */
+		/* Not support base language */
 		if (NULL != voice) {
 			*language = strdup(voice->language);
 			*type = voice->type;
@@ -315,20 +299,18 @@ Eina_Bool tts_config_mgr_inotify_event_cb(void* data, Ecore_Fd_Handler *fd_handl
 	SLOG(LOG_DEBUG, tts_tag(), "===== Config changed callback event");
 
 	int length;
-	char buffer[BUF_LEN];
-	memset(buffer, '\0', BUF_LEN);
+	struct inotify_event event;
+	memset(&event, '\0', sizeof(struct inotify_event));
 
-	length = read(g_config_fd_noti, buffer, BUF_LEN);
-
+	length = read(g_config_fd_noti, &event, sizeof(struct inotify_event));
 	if (0 > length) {
 		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Empty Inotify event");
 		SLOG(LOG_DEBUG, tts_tag(), "=====");
 		SLOG(LOG_DEBUG, tts_tag(), " ");
-		return ECORE_CALLBACK_DONE; 
+		return ECORE_CALLBACK_DONE;
 	}
 
-	struct inotify_event *event = (struct inotify_event*)&buffer;
-	if (IN_MODIFY == event->mask) {
+	if (IN_CLOSE_WRITE == event.mask) {
 		/* check config changed state */
 		char* engine = NULL;
 		char* setting = NULL;
@@ -496,7 +478,7 @@ int __tts_config_mgr_register_config_event()
 	}
 	g_config_fd_noti = fd;
 
-	wd = inotify_add_watch(fd, TTS_CONFIG, IN_MODIFY);
+	wd = inotify_add_watch(fd, TTS_CONFIG, IN_CLOSE_WRITE);
 	g_config_wd_noti = wd;
 
 	g_config_fd_handler_noti = ecore_main_fd_handler_add(fd, ECORE_FD_READ, 
@@ -532,52 +514,51 @@ void __tts_config_speech_rate_key_changed_cb(keynode_t *key, void *data)
 {
 	int ret;
 	int speech_rate;
-	ret = vconf_get_int(VCONFKEY_SETAPPL_ACCESSIBILITY_SPEECH_RATE, &speech_rate);
+	ret = vconf_get_int(TTS_ACCESSIBILITY_SPEED_KEY, &speech_rate);
 
 	if (0 != ret) {
 		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Fail to get speech rate");
 		return;
 	}
-
-	/* Match value with TTS value */
-	speech_rate++;
 	
 	/* Check speech rate is valid */
-	if (speech_rate <= 0 && speech_rate >= 6) {
-		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Speech rate is not valid : %d", speech_rate);
-	} else {
+	if (TTS_CONFIG_SPEED_MIN <= speech_rate && speech_rate <= TTS_CONFIG_SPEED_MAX) {
 		SLOG(LOG_DEBUG, tts_tag(), "[Config] Speech rate  : %d", speech_rate);
-	}
+		
+		if (g_config_info->speech_rate != speech_rate) {
+			g_config_info->speech_rate = speech_rate;
 
-	if (g_config_info->speech_rate != speech_rate) {
-		g_config_info->speech_rate = speech_rate;
+			tts_parser_set_speech_rate(g_config_info->speech_rate);
 
-		tts_parser_set_speech_rate(g_config_info->speech_rate);
+			GSList *iter = NULL;
+			tts_config_client_s* temp_client = NULL;
 
-		GSList *iter = NULL;
-		tts_config_client_s* temp_client = NULL;
+			/* Call all callbacks of client*/
+			iter = g_slist_nth(g_config_client_list, 0);
 
-		/* Call all callbacks of client*/
-		iter = g_slist_nth(g_config_client_list, 0);
+			while (NULL != iter) {
+				temp_client = iter->data;
 
-		while (NULL != iter) {
-			temp_client = iter->data;
-
-			if (NULL != temp_client) {
-				if (NULL != temp_client->speech_cb) {
-					temp_client->speech_cb(g_config_info->speech_rate, temp_client->user_data);
+				if (NULL != temp_client) {
+					if (NULL != temp_client->speech_cb) {
+						temp_client->speech_cb(g_config_info->speech_rate, temp_client->user_data);
+					}
 				}
-			}
 
-			iter = g_slist_next(iter);
+				iter = g_slist_next(iter);
+			}
 		}
+	} else {
+		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Speech rate is not valid : %d", speech_rate);
 	}
+
+	return;
 }
 
 int __tts_config_set_auto_language()
 {
 	char* value = NULL;
-	value = vconf_get_str(VCONFKEY_LANGSET);
+	value = vconf_get_str(TTS_LANGSET_KEY);
 	if (NULL == value) {
 		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Fail to get display language");
 		return -1;
@@ -701,7 +682,7 @@ void __tts_config_screen_reader_changed_cb(keynode_t *key, void *data)
 {
 	int ret;
 	int screen_reader;
-	ret = vconf_get_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, &screen_reader);
+	ret = vconf_get_int(TTS_ACCESSIBILITY_KEY, &screen_reader);
 	if (0 != ret) {
 		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Fail to get screen reader");
 		return;
@@ -781,6 +762,210 @@ void __tts_config_release_engine()
 	return;
 }
 
+int __tts_config_mgr_get_engine_info()
+{
+	DIR *dp = NULL;
+	int ret = -1;
+	struct dirent entry;
+	struct dirent *dirp = NULL;
+
+	char filepath[512] = {'\0',};
+	int filesize;
+	tts_engine_info_s* info = NULL;
+
+	g_engine_list = NULL;
+
+	/* Get engine info from default engine directory */
+	dp  = opendir(TTS_DEFAULT_ENGINE_INFO);
+	if (NULL == dp) {
+		SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] No downloadable directory : %s", TTS_DEFAULT_ENGINE_INFO);
+	} else {
+		do {
+			ret = readdir_r(dp, &entry, &dirp);
+			if (0 != ret) {
+				SLOG(LOG_ERROR, tts_tag(), "[CONFIG] Fail to read directory");
+				break;
+			}
+
+			if (NULL != dirp) {
+				filesize = strlen(TTS_DEFAULT_ENGINE_INFO) + strlen(dirp->d_name) + 2;
+				if (filesize >= 512) {
+					SECURE_SLOG(LOG_ERROR, tts_tag(), "[CONFIG ERROR] File path is too long : %s", dirp->d_name);
+					closedir(dp);
+					return -1;
+				}
+				
+				memset(filepath, '\0', 512);
+				snprintf(filepath, 512, "%s/%s", TTS_DEFAULT_ENGINE_INFO, dirp->d_name);
+
+				SECURE_SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] Filepath(%s)", filepath);
+
+				if (0 == tts_parser_get_engine_info(filepath, &info)) {
+					g_engine_list = g_slist_append(g_engine_list, info);
+				}
+			}
+		} while (NULL != dirp);
+
+		closedir(dp);
+	}
+
+	/* Get engine info from downloadable engine directory */
+	dp  = opendir(TTS_DOWNLOAD_ENGINE_INFO);
+	if (NULL == dp) {
+		SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] No downloadable directory : %s", TTS_DOWNLOAD_ENGINE_INFO);
+	} else {
+		do {
+			ret = readdir_r(dp, &entry, &dirp);
+			if (0 != ret) {
+				SLOG(LOG_ERROR, tts_tag(), "[CONFIG] Fail to read directory");
+				break;
+			}
+
+			if (NULL != dirp) {
+				filesize = strlen(TTS_DOWNLOAD_ENGINE_INFO) + strlen(dirp->d_name) + 2;
+				if (filesize >= 512) {
+					SECURE_SLOG(LOG_ERROR, tts_tag(), "[CONFIG ERROR] File path is too long : %s", dirp->d_name);
+					closedir(dp);
+					return -1;
+				}
+				
+				memset(filepath, '\0', 512);
+				snprintf(filepath, 512, "%s/%s", TTS_DOWNLOAD_ENGINE_INFO, dirp->d_name);
+
+				SECURE_SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] Filepath(%s)", filepath);
+
+				if (0 == tts_parser_get_engine_info(filepath, &info)) {
+					/* Compare id */
+					GSList *iter = NULL;
+					tts_engine_info_s *engine_info = NULL;
+
+					/* Get a first item */
+					iter = g_slist_nth(g_engine_list, 0);
+
+					while (NULL != iter) {
+						engine_info = iter->data;
+
+						if (NULL != engine_info) {
+							/* Remove old engine info */
+							if (0 == strncmp(engine_info->uuid, info->uuid, strlen(engine_info->uuid))) {
+								SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] Remove old engine : %s", engine_info->name);
+								g_engine_list = g_slist_remove(g_engine_list, engine_info);
+								tts_parser_free_engine_info(engine_info);
+								break;
+							}
+						}
+						iter = iter->next;
+					}
+
+					g_engine_list = g_slist_append(g_engine_list, info);
+				}
+			}
+		} while (NULL != dirp);
+
+		closedir(dp);
+	}
+
+	if (0 >= g_slist_length(g_engine_list)) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] No engine");
+		return -1;
+	}
+
+	return 0;
+}
+
+static Eina_Bool __tts_config_mgr_engine_config_inotify_event_callback(void* data, Ecore_Fd_Handler *fd_handler)
+{
+	SLOG(LOG_DEBUG, tts_tag(), "===== Engine config updated callback event");
+
+	int length;
+	struct inotify_event event;
+	memset(&event, '\0', sizeof(struct inotify_event));
+
+	length = read(g_dir_fd, &event, sizeof(struct inotify_event));
+	if (0 > length) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Empty Inotify event");
+		SLOG(LOG_DEBUG, tts_tag(), "=====");
+		SLOG(LOG_DEBUG, tts_tag(), " ");
+		return ECORE_CALLBACK_DONE;
+	}
+
+	if (IN_CLOSE_WRITE == event.mask) {
+		int ret = __tts_config_mgr_get_engine_info();
+		if (0 != ret) {
+			SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to get engine info when config updated");
+		}
+		__tts_config_mgr_print_engine_info();
+		bool support = tts_config_check_default_voice_is_valid(g_config_info->language, g_config_info->type);
+		if (false == support) {
+			SLOG(LOG_DEBUG, tts_tag(), "[ERROR] Default voice is valid");
+			char* temp_lang = NULL;
+			int temp_type;
+			ret = __tts_config_mgr_select_lang(g_config_info->engine_id, &temp_lang, &temp_type);
+			if (0 != ret) {
+				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to get voice");
+			}
+			
+			ret = tts_config_mgr_set_voice(temp_lang, temp_type);
+			if (0 != ret) {
+				SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to set voice");
+			} else {
+				SLOG(LOG_DEBUG, tts_tag(), "[DEBUG] Saved default voice : lang(%s), type(%d)", g_config_info->language, g_config_info->type);
+			}
+			if (NULL != temp_lang)	free(temp_lang);
+		}
+	} else {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Undefined event");
+	}
+
+	SLOG(LOG_DEBUG, tts_tag(), "=====");
+	SLOG(LOG_DEBUG, tts_tag(), " ");
+
+	return ECORE_CALLBACK_PASS_ON;
+}
+
+static int __tts_config_mgr_register_engine_config_updated_event()
+{
+	/* For engine directory monitoring */
+	g_dir_fd = inotify_init();
+	if (g_dir_fd < 0) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to init inotify");
+		return -1;
+	}
+
+	g_dir_wd = inotify_add_watch(g_dir_fd, TTS_OPT_BASE"/engine-info/", IN_CLOSE_WRITE);
+	if (g_dir_wd < 0) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to add watch");
+		return -1;
+	}
+
+	g_dir_fd_handler = ecore_main_fd_handler_add(g_dir_fd, ECORE_FD_READ, (Ecore_Fd_Cb)__tts_config_mgr_engine_config_inotify_event_callback, NULL, NULL, NULL);
+	if (NULL == g_dir_fd_handler) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to add fd handler");
+		return -1;
+	}
+
+	/* Set non-blocking mode of file */
+	int value;
+	value = fcntl(g_dir_fd, F_GETFL, 0);
+	value |= O_NONBLOCK;
+	
+	if (0 > fcntl(g_dir_fd, F_SETFL, value)) {
+		SLOG(LOG_WARN, tts_tag(), "[WARNING] Fail to set non-block mode");
+	}
+
+	return 0;
+}
+
+static int __tts_config_mgr_unregister_engine_config_updated_event()
+{
+	/* delete inotify variable */
+	ecore_main_fd_handler_del(g_dir_fd_handler);
+	inotify_rm_watch(g_dir_fd, g_dir_wd);
+	close(g_dir_fd);
+
+	return 0;
+}
+
 int tts_config_mgr_initialize(int uid)
 {
 	GSList *iter = NULL;
@@ -817,42 +1002,12 @@ int tts_config_mgr_initialize(int uid)
 		g_config_client_list = g_slist_append(g_config_client_list, temp_client);
 	}
 
-	/* Get file name from default engine directory */
-	DIR *dp;
-	struct dirent *dirp;
-
-	g_engine_list = NULL;
-
-	dp  = opendir(TTS_DEFAULT_ENGINE_INFO);
-	if (NULL == dp) {
-		SLOG(LOG_ERROR, tts_tag(), "[CONFIG] Fail to open default directory");
-		return TTS_CONFIG_ERROR_OPERATION_FAILED;
+	if (0 != __tts_config_mgr_get_engine_info()) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to get engine info");
+		__tts_config_release_client(uid);
+		__tts_config_release_engine();
+		return TTS_CONFIG_ERROR_ENGINE_NOT_FOUND;
 	}
-
-	char filepath[512] = {'\0',};
-	int filesize;
-	tts_engine_info_s* info = NULL;
-
-	while (NULL != (dirp = readdir(dp))) {
-		filesize = strlen(TTS_DEFAULT_ENGINE_INFO) + strlen(dirp->d_name) + 2;
-		if (filesize >= 512) {
-			SECURE_SLOG(LOG_ERROR, tts_tag(), "[CONFIG ERROR] File path is too long : %s", dirp->d_name);
-			closedir(dp);
-			return -1;
-		}
-
-		memset(filepath, '\0', 512);
-		strcpy(filepath, TTS_DEFAULT_ENGINE_INFO);
-		strcat(filepath, "/");
-		strcat(filepath, dirp->d_name);
-
-		SECURE_SLOG(LOG_DEBUG, tts_tag(), "[CONFIG] Filepath(%s)", filepath);
-
-		if (0 == tts_parser_get_engine_info(filepath, &info)) {	
-			g_engine_list = g_slist_append(g_engine_list, info);	
-		}
-	}
-	closedir(dp);
 
 	__tts_config_mgr_print_engine_info();
 
@@ -929,9 +1084,19 @@ int tts_config_mgr_initialize(int uid)
 	}
 
 	/* Register to detect display language change */
-	vconf_notify_key_changed(VCONFKEY_LANGSET, __tts_config_display_language_changed_cb, NULL);
-	vconf_notify_key_changed(VCONFKEY_SETAPPL_ACCESSIBILITY_SPEECH_RATE, __tts_config_speech_rate_key_changed_cb, NULL);
-	vconf_notify_key_changed(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, __tts_config_screen_reader_changed_cb, NULL);
+	vconf_notify_key_changed(TTS_LANGSET_KEY, __tts_config_display_language_changed_cb, NULL);
+	vconf_notify_key_changed(TTS_ACCESSIBILITY_SPEED_KEY, __tts_config_speech_rate_key_changed_cb, NULL);
+	vconf_notify_key_changed(TTS_ACCESSIBILITY_KEY, __tts_config_screen_reader_changed_cb, NULL);
+
+	/* For engine directory monitoring */
+	if (0 != __tts_config_mgr_register_engine_config_updated_event()) {
+		SLOG(LOG_ERROR, tts_tag(), "[ERROR] Fail to register engine config updated event");
+		__tts_config_release_client(uid);
+		__tts_config_release_engine();
+		tts_parser_unload_config(g_config_info);
+		__tts_config_mgr_unregister_config_event();
+		return TTS_CONFIG_ERROR_OPERATION_FAILED;
+	}
 
 	return 0;
 }
@@ -946,11 +1111,13 @@ int tts_config_mgr_finalize(int uid)
 
 	tts_parser_unload_config(g_config_info);
 
+	__tts_config_mgr_unregister_engine_config_updated_event();
+
 	__tts_config_mgr_unregister_config_event();
 
-	vconf_ignore_key_changed(VCONFKEY_LANGSET, __tts_config_display_language_changed_cb);
-	vconf_ignore_key_changed(VCONFKEY_SETAPPL_ACCESSIBILITY_SPEECH_RATE, __tts_config_speech_rate_key_changed_cb);
-	vconf_ignore_key_changed(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, __tts_config_screen_reader_changed_cb);
+	vconf_ignore_key_changed(TTS_LANGSET_KEY, __tts_config_display_language_changed_cb);
+	vconf_ignore_key_changed(TTS_ACCESSIBILITY_SPEED_KEY, __tts_config_speech_rate_key_changed_cb);
+	vconf_ignore_key_changed(TTS_ACCESSIBILITY_KEY, __tts_config_screen_reader_changed_cb);
 
 	return 0;
 }
@@ -1192,7 +1359,8 @@ int tts_config_mgr_set_engine(const char* engine)
 		if (NULL != g_config_info->setting)
 			free(g_config_info->setting);
 
-		g_config_info->setting = strdup(engine_info->setting);
+		if (NULL != engine_info->setting)
+			g_config_info->setting = strdup(engine_info->setting);
 
 		/* Engine is valid*/
 		GSList *iter_voice = NULL;
@@ -1207,6 +1375,8 @@ int tts_config_mgr_set_engine(const char* engine)
 			voice = iter_voice->data;
 			
 			if (NULL != voice) {
+				if (NULL == voice->language)
+					continue;
 				SLOG(LOG_DEBUG, tts_tag(), " lang(%s) type(%d)", voice->language, voice->type);
 
 				if (0 == strcmp(voice->language, g_config_info->language)) {
@@ -1234,10 +1404,14 @@ int tts_config_mgr_set_engine(const char* engine)
 				free(g_config_info->language);
 
 				iter_voice = g_slist_nth(engine_info->voices, 0);
-				voice = iter_voice->data;
-
-				g_config_info->language = strdup(voice->language);
-				g_config_info->type = voice->type;
+				if (NULL != iter_voice) {
+					voice = iter_voice->data;
+					if (NULL != voice) {
+						if (NULL != voice->language)
+							g_config_info->language = strdup(voice->language);
+						g_config_info->type = voice->type;
+					}
+				}
 			}
 		}
 
@@ -1442,18 +1616,20 @@ int tts_config_mgr_set_speech_rate(int value)
 		SLOG(LOG_ERROR, tts_tag(), "Not initialized");
 		return TTS_CONFIG_ERROR_INVALID_PARAMETER;
 	}
-	
-	if (0 != tts_parser_set_speech_rate(value)) {
-		SLOG(LOG_ERROR, tts_tag(), "Fail to save speech rate");
-		return TTS_CONFIG_ERROR_OPERATION_FAILED;
+
+	if (TTS_CONFIG_SPEED_MIN <= value && value <= TTS_CONFIG_SPEED_MAX) {
+		SLOG(LOG_DEBUG, tts_tag(), "[Config] Set speech rate : %d", value);
+		if (0 != tts_parser_set_speech_rate(value)) {
+			SLOG(LOG_ERROR, tts_tag(), "Fail to save speech rate");
+			return TTS_CONFIG_ERROR_OPERATION_FAILED;
+		}
+		
+		g_config_info->speech_rate = value;
+
+		vconf_set_int(TTS_ACCESSIBILITY_SPEED_KEY, value);
+	} else {
+		SLOG(LOG_ERROR, tts_tag(), "[Config ERROR] Speech rate is invalid : %d", value);
 	}
-	
-	g_config_info->speech_rate = value;
-
-	int temp_speech_rate = g_config_info->speech_rate;
-	temp_speech_rate--;
-
-	vconf_set_int(VCONFKEY_SETAPPL_ACCESSIBILITY_SPEECH_RATE, temp_speech_rate);
 	
 	return 0;
 }
@@ -1681,16 +1857,16 @@ int __tts_config_mgr_print_engine_info()
 			/* Get a first item */
 			iter_voice = g_slist_nth(engine_info->voices, 0);
 
-			int i = 1;	
+			int j = 1;
 			while (NULL != iter_voice) {
 				/*Get handle data from list*/
 				voice = iter_voice->data;
 
-				SLOG(LOG_DEBUG, tts_tag(), "  [%dth] lang(%s) type(%d)", i, voice->language, voice->type);
+				SLOG(LOG_DEBUG, tts_tag(), "  [%dth] lang(%s) type(%d)", j, voice->language, voice->type);
 
 				/*Get next item*/
 				iter_voice = g_slist_next(iter_voice);
-				i++;
+				j++;
 			}
 		} else {
 			SLOG(LOG_ERROR, tts_tag(), "  Voice is NONE");
@@ -1705,16 +1881,15 @@ int __tts_config_mgr_print_engine_info()
 
 char* tts_config_get_message_path(int mode, int pid)
 {
-	char* path;
-	path = malloc(sizeof(char) * 128);
-	memset(path, '\0', 128);
+	char* path = NULL;
+	path = calloc(128, sizeof(char));
 
 	switch(mode) {
-	case 0:	snprintf(path, 64, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_DEFAULT, pid);	break;
-	case 1:	snprintf(path, 64, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_NOTIFICATION, pid);	break;
-	case 2:	snprintf(path, 64, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_SCREEN_READER, pid);	break;
+	case 0:	snprintf(path, 128, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_DEFAULT, pid);	break;
+	case 1:	snprintf(path, 128, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_NOTIFICATION, pid);	break;
+	case 2:	snprintf(path, 128, "%s%s_%d", MESSAGE_FILE_PATH_ROOT, MESSAGE_FILE_PREFIX_SCREEN_READER, pid);	break;
 	default:
-		free(path);
+		if (NULL != path)	free(path);
 		SLOG(LOG_ERROR, tts_tag(), "[Config] Invalid mode (%d)", mode);
 		return NULL;
 	}

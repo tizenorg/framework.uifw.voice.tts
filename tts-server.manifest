@@ -3,8 +3,8 @@
                 <domain name="tts-server" policy="shared"/>
         </define>
 	<assign>
-		<filesystem path="/usr/lib/libtts.so" label="_"/>
-		<filesystem path="/usr/lib/libtts_setting.so" label="_"/>
+		<filesystem path="/usr/lib/libtts.so" label="_" exec_label="none"/>
+		<filesystem path="/usr/lib/libtts_setting.so" label="_" exec_label="none"/>
 	</assign>
         <request>
                 <domain name="tts-server" />

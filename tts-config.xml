@@ -3,8 +3,8 @@
         <engine>27F277E9-BBC4-4dca-B553-D9884A3CDAA0</engine>
         <engine-setting/>
         <auto>on</auto>
-        <language>en_GB</language>
+        <language>en_US</language>
         <voice-type>female</voice-type>
-        <speech-rate>3</speech-rate>
-        <pitch>3</pitch>
+        <speech-rate>8</speech-rate>
+        <pitch>8</pitch>
 </tts-config>

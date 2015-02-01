@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -42,40 +42,6 @@ typedef enum {
 }ttsp_error_e;
 
 /**
-* @brief Enumerations of speaking speed.
-*/
-typedef enum {
-	TTSP_SPEED_VERY_SLOW	= 1,	/**< Very slow */
-	TTSP_SPEED_SLOW		= 2,	/**< Slow */
-	TTSP_SPEED_NORMAL	= 3,	/**< Normal */
-	TTSP_SPEED_FAST		= 4,	/**< Fast */
-	TTSP_SPEED_VERY_FAST	= 5	/**< Very fast */
-}ttsp_speed_e;
-
-/**
-* @brief Enumerations of speaking pitch.
-*/
-typedef enum {
-	TTSP_PITCH_VERY_LOW	= 1,	/**< Very low */
-	TTSP_PITCH_LOW		= 2,	/**< Low */
-	TTSP_PITCH_NORMAL	= 3,	/**< Normal */
-	TTSP_PITCH_HIGH		= 4,	/**< High */
-	TTSP_PITCH_VERY_HIGH	= 5	/**< Very high */
-}ttsp_pitch_e;
-
-/** 
-* @brief Enumerations of voice type.
-*/
-typedef enum {
-	TTSP_VOICE_TYPE_MALE = 1,	/**< Male */
-	TTSP_VOICE_TYPE_FEMALE,		/**< Female */
-	TTSP_VOICE_TYPE_CHILD,		/**< Child */
-	TTSP_VOICE_TYPE_USER1,		/**< Engine defined */
-	TTSP_VOICE_TYPE_USER2,		/**< Engine defined */
-	TTSP_VOICE_TYPE_USER3		/**< Engine defined */
-}ttsp_voice_type_e;
-
-/**
 * @brief Enumerations of audio type.
 */
 typedef enum {
@@ -93,6 +59,27 @@ typedef enum {
 	TTSP_RESULT_EVENT_CONTINUE	= 2,  /**< event when the next sound data exist, not first and not last */
 	TTSP_RESULT_EVENT_FINISH	= 3   /**< event when the sound data is last data or sound data is only one result */
 }ttsp_result_event_e;
+
+/** 
+* @brief Defines of speaking speed.
+*/
+#define TTSP_SPEED_MIN		1
+#define TTSP_SPEED_NORMAL	8
+#define TTSP_SPEED_MAX		15
+
+/** 
+* @brief Defines of speaking pitch.
+*/
+#define TTSP_PITCH_MIN		1
+#define TTSP_PITCH_NORMAL	8
+#define TTSP_PITCH_MAX		15
+
+/** 
+* @brief Defines of voice type.
+*/
+#define TTSP_VOICE_TYPE_MALE	1
+#define TTSP_VOICE_TYPE_FEMALE	2
+#define TTSP_VOICE_TYPE_CHILD	3
 
 /** 
 * @brief Called when the daemon gets synthesized result.
@@ -128,7 +115,7 @@ typedef bool (*ttspe_result_cb)(ttsp_result_event_e event, const void* data, uns
 *
 * @see ttspe_foreach_supported_voices()
 */
-typedef bool (*ttspe_supported_voice_cb)(const char* language, ttsp_voice_type_e type, void* user_data);
+typedef bool (*ttspe_supported_voice_cb)(const char* language, int type, void* user_data);
 
 /**
 * @brief Initializes the engine.
@@ -183,7 +170,7 @@ typedef int (* ttspe_foreach_supported_voices)(ttspe_supported_voice_cb callback
 *
 * @see ttspe_foreach_supported_voices()
 */
-typedef bool (* ttspe_is_valid_voice)(const char* language, ttsp_voice_type_e type);
+typedef bool (* ttspe_is_valid_voice)(const char* language, int type);
 
 /**
 * @brief Sets default pitch.
@@ -196,7 +183,7 @@ typedef bool (* ttspe_is_valid_voice)(const char* language, ttsp_voice_type_e ty
 * @retval #TTSP_ERROR_INVALID_STATE Not initialized
 * @retval #TTSP_ERROR_OPERATION_FAILED Fail
 */
-typedef int (* ttspe_set_pitch)(ttsp_pitch_e pitch);
+typedef int (* ttspe_set_pitch)(int pitch);
 
 /**
 * @brief Load voice of the engine.
@@ -214,7 +201,7 @@ typedef int (* ttspe_set_pitch)(ttsp_pitch_e pitch);
 *
 * @see ttspe_unload_voice()
 */
-typedef int (* ttspe_load_voice)(const char* language, ttsp_voice_type_e type);
+typedef int (* ttspe_load_voice)(const char* language, int type);
 
 /**
 * @brief Unload voice of the engine.
@@ -231,7 +218,7 @@ typedef int (* ttspe_load_voice)(const char* language, ttsp_voice_type_e type);
 *
 * @see ttspe_load_voice()
 */
-typedef int (* ttspe_unload_voice)(const char* language, ttsp_voice_type_e type);
+typedef int (* ttspe_unload_voice)(const char* language, int type);
 
 /**
 * @brief Starts voice synthesis, asynchronously.
@@ -255,7 +242,7 @@ typedef int (* ttspe_unload_voice)(const char* language, ttsp_voice_type_e type)
 * @see ttspe_result_cb()
 * @see ttspe_cancel_synthesis()
 */
-typedef int (* ttspe_start_synthesis)(const char* language, ttsp_voice_type_e type, const char* text, ttsp_speed_e speed, void* user_data);
+typedef int (* ttspe_start_synthesis)(const char* language, int type, const char* text, int speed, void* user_data);
 
 /**
 * @brief Cancels voice synthesis.

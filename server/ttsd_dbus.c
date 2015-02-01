@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -31,7 +31,7 @@ static char *g_service_name;
 static char *g_service_object;
 static char *g_service_interface;
 
-char* __ttsd_get_error_code(ttsd_error_e err)
+const char* __ttsd_get_error_code(ttsd_error_e err)
 {
 	switch(err) {
 	case TTSD_ERROR_NONE:			return "TTS_ERROR_NONE";
@@ -115,7 +115,7 @@ int ttsdc_send_hello(int pid, int uid)
 	return result;
 }
 
-int ttsdc_send_message(int pid, int uid, int data, char *method)
+int ttsdc_send_message(int pid, int uid, int data, const char *method)
 {
 	char* send_filename;
 	send_filename = tts_config_get_message_path((int)ttsd_get_mode(), pid);
@@ -217,8 +217,13 @@ static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handle
 	DBusMessage* msg = NULL;
 	msg = dbus_connection_pop_message(conn);
 
+	if (true != dbus_connection_get_is_connected(conn)) {
+		SLOG(LOG_ERROR, get_tag(), "[ERROR] Connection is disconnected");
+		return ECORE_CALLBACK_RENEW;
+	}
+
 	/* loop again if we haven't read a message */
-	if (NULL == msg || NULL == conn) { 
+	if (NULL == msg) {
 		return ECORE_CALLBACK_RENEW;
 	}
 
@@ -237,9 +242,6 @@ static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handle
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_GET_CURRENT_VOICE)) {
 		ttsd_dbus_server_get_current_voice(conn, msg);
-
-	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_SET_SOUND_TYPE)) {
-		ttsd_dbus_server_set_sound_type(conn, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_ADD_QUEUE)) {
 		ttsd_dbus_server_add_text(conn, msg);
@@ -284,29 +286,29 @@ int ttsd_dbus_open_connection()
 	}
 
 	if (TTSD_MODE_SCREEN_READER == ttsd_get_mode()) {
-		g_service_name = (char*)malloc(sizeof(char) * strlen(TTS_SR_SERVER_SERVICE_NAME) + 1);
-		g_service_object = (char*)malloc(sizeof(char) * strlen(TTS_SR_SERVER_SERVICE_OBJECT_PATH) + 1);
-		g_service_interface = (char*)malloc(sizeof(char) * strlen(TTS_SR_SERVER_SERVICE_INTERFACE) + 1);
+		g_service_name = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_NAME) + 1, sizeof(char));
+		g_service_object = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
+		g_service_interface = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
 
-		strcpy(g_service_name, TTS_SR_SERVER_SERVICE_NAME);
-		strcpy(g_service_object, TTS_SR_SERVER_SERVICE_OBJECT_PATH);
-		strcpy(g_service_interface, TTS_SR_SERVER_SERVICE_INTERFACE);
+		snprintf(g_service_name, strlen(TTS_SR_SERVER_SERVICE_NAME) + 1, "%s", TTS_SR_SERVER_SERVICE_NAME);
+		snprintf(g_service_object, strlen(TTS_SR_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_SR_SERVER_SERVICE_OBJECT_PATH);
+		snprintf(g_service_interface, strlen(TTS_SR_SERVER_SERVICE_INTERFACE) + 1, "%s", TTS_SR_SERVER_SERVICE_INTERFACE);
 	} else if (TTSD_MODE_NOTIFICATION == ttsd_get_mode()) {
-		g_service_name = (char*)malloc(sizeof(char) * strlen(TTS_NOTI_SERVER_SERVICE_NAME) + 1);
-		g_service_object = (char*)malloc(sizeof(char) * strlen(TTS_NOTI_SERVER_SERVICE_OBJECT_PATH) + 1);
-		g_service_interface = (char*)malloc(sizeof(char) * strlen(TTS_NOTI_SERVER_SERVICE_INTERFACE) + 1);
+		g_service_name = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_NAME) + 1, sizeof(char));
+		g_service_object = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
+		g_service_interface = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
 
-		strcpy(g_service_name, TTS_NOTI_SERVER_SERVICE_NAME);
-		strcpy(g_service_object, TTS_NOTI_SERVER_SERVICE_OBJECT_PATH);
-		strcpy(g_service_interface, TTS_NOTI_SERVER_SERVICE_INTERFACE);
+		snprintf(g_service_name, strlen(TTS_NOTI_SERVER_SERVICE_NAME) + 1, "%s", TTS_NOTI_SERVER_SERVICE_NAME);
+		snprintf(g_service_object, strlen(TTS_NOTI_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_NOTI_SERVER_SERVICE_OBJECT_PATH);
+		snprintf(g_service_interface, strlen(TTS_NOTI_SERVER_SERVICE_INTERFACE) + 1, "%s", TTS_NOTI_SERVER_SERVICE_INTERFACE);
 	} else {
-		g_service_name = (char*)malloc(sizeof(char) * strlen(TTS_SERVER_SERVICE_NAME) + 1);
-		g_service_object = (char*)malloc(sizeof(char) * strlen(TTS_SERVER_SERVICE_OBJECT_PATH) + 1);
-		g_service_interface = (char*)malloc(sizeof(char) * strlen(TTS_SERVER_SERVICE_INTERFACE) + 1);
+		g_service_name = (char*)calloc(strlen(TTS_SERVER_SERVICE_NAME) + 1, sizeof(char));
+		g_service_object = (char*)calloc(strlen(TTS_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
+		g_service_interface = (char*)calloc(strlen(TTS_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
 
-		strcpy(g_service_name, TTS_SERVER_SERVICE_NAME);
-		strcpy(g_service_object, TTS_SERVER_SERVICE_OBJECT_PATH);
-		strcpy(g_service_interface, TTS_SERVER_SERVICE_INTERFACE);
+		snprintf(g_service_name, strlen(TTS_SERVER_SERVICE_NAME) + 1, "%s", TTS_SERVER_SERVICE_NAME);
+		snprintf(g_service_object, strlen(TTS_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_SERVER_SERVICE_OBJECT_PATH);
+		snprintf(g_service_interface, strlen(TTS_SERVER_SERVICE_INTERFACE)+ 1, "%s", TTS_SERVER_SERVICE_INTERFACE);
 	}
 
 	/* request our name on the bus and check for errors */
@@ -417,8 +419,11 @@ int ttsd_file_clean_up()
 {
 	SLOG(LOG_DEBUG, get_tag(), "== Old message file clean up == ");
 
-	DIR *dp;
-	struct dirent *dirp;
+	DIR *dp = NULL;
+	int ret = -1;
+	struct dirent entry;
+	struct dirent *dirp = NULL;
+
 	dp = opendir(MESSAGE_FILE_PATH_ROOT);
 	if (dp == NULL) {
 		SLOG(LOG_ERROR, get_tag(), "[File message WARN] Fail to open path : %s", MESSAGE_FILE_PATH_ROOT);
@@ -429,28 +434,37 @@ int ttsd_file_clean_up()
 	char remove_path[256] = {0, };
 
 	switch(ttsd_get_mode()) {
-	case TTSD_MODE_DEFAULT:		strcpy(prefix, MESSAGE_FILE_PREFIX_DEFAULT);		break;
-	case TTSD_MODE_NOTIFICATION:	strcpy(prefix, MESSAGE_FILE_PREFIX_NOTIFICATION);	break;
-	case TTSD_MODE_SCREEN_READER:	strcpy(prefix, MESSAGE_FILE_PREFIX_SCREEN_READER);	break;
+	case TTSD_MODE_DEFAULT:		snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_DEFAULT);		break;
+	case TTSD_MODE_NOTIFICATION:	snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_NOTIFICATION);	break;
+	case TTSD_MODE_SCREEN_READER:	snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_SCREEN_READER);	break;
 	default:
 		SLOG(LOG_ERROR, get_tag(), "[File ERROR] Fail to get mode : %d", ttsd_get_mode());
 		closedir(dp);
 		return -1;
 	}
 
-	while ((dirp = readdir(dp)) != NULL) {		
-		if (0 == strncmp(prefix, dirp->d_name, strlen(prefix))) {
-			memset(remove_path, 0, 256);
-			sprintf(remove_path, "%s%s", MESSAGE_FILE_PATH_ROOT, dirp->d_name);
-			
-			/* Clean up code */
-			if (0 != remove(remove_path)) {
-				SLOG(LOG_WARN, get_tag(), "[File message WARN] Fail to remove message file : %s", remove_path);
-			} else {
-				SLOG(LOG_DEBUG, get_tag(), "[File message] Remove message file : %s", remove_path);
+	do {
+		ret = readdir_r(dp, &entry, &dirp);
+		if (0 != ret) {
+			SLOG(LOG_ERROR, get_tag(), "[File ERROR] Fail to read directory");
+			break;
+		}
+
+		if (NULL != dirp) {
+			if (!strncmp(prefix, dirp->d_name, strlen(prefix))) {
+				memset(remove_path, 0, 256);
+				snprintf(remove_path, 256, "%s%s", MESSAGE_FILE_PATH_ROOT, dirp->d_name);
+
+				/* Clean up code */
+				if (0 != remove(remove_path)) {
+					SLOG(LOG_WARN, get_tag(), "[File message WARN] Fail to remove message file : %s", remove_path);
+				} else {
+					SLOG(LOG_DEBUG, get_tag(), "[File message] Remove message file : %s", remove_path);
+				}
 			}
 		}
-	}
+	} while (NULL != dirp);
+
 	closedir(dp);
 
 	return 0;

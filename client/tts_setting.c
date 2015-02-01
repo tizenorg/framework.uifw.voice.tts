@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -48,24 +48,24 @@ static void* g_pitch_changed_user_data;
 
 
 
-char* tts_tag()
+const char* tts_tag()
 {
 	return "ttsc";
 }
 
-int __convert_error_code(tts_config_error_e code)
+static int __setting_convert_config_error_code(tts_config_error_e code)
 {
 	if (code == TTS_CONFIG_ERROR_NONE)			return TTS_SETTING_ERROR_NONE;
-	if (code == TTS_CONFIG_ERROR_OPERATION_FAILED)		return TTS_SETTING_ERROR_OPERATION_FAILED;
+	if (code == TTS_CONFIG_ERROR_OUT_OF_MEMORY)		return TTS_SETTING_ERROR_OUT_OF_MEMORY;
+	if (code == TTS_CONFIG_ERROR_IO_ERROR)			return TTS_SETTING_ERROR_IO_ERROR;
 	if (code == TTS_CONFIG_ERROR_INVALID_PARAMETER)		return TTS_SETTING_ERROR_INVALID_PARAMETER;
-	if (code == TTS_CONFIG_ERROR_ENGINE_NOT_FOUND)		return TTS_SETTING_ERROR_ENGINE_NOT_FOUND;
 	if (code == TTS_CONFIG_ERROR_INVALID_STATE)		return TTS_SETTING_ERROR_INVALID_STATE;
 	if (code == TTS_CONFIG_ERROR_INVALID_VOICE)		return TTS_SETTING_ERROR_INVALID_VOICE;
+	if (code == TTS_CONFIG_ERROR_ENGINE_NOT_FOUND)		return TTS_SETTING_ERROR_ENGINE_NOT_FOUND;
+	if (code == TTS_CONFIG_ERROR_OPERATION_FAILED)		return TTS_SETTING_ERROR_OPERATION_FAILED;
 	if (code == TTS_CONFIG_ERROR_NOT_SUPPORTED_FEATURE)	return TTS_SETTING_ERROR_NOT_SUPPORTED_FEATURE;
-	if (code == TTS_CONFIG_ERROR_IO_ERROR)			return TTS_SETTING_ERROR_IO_ERROR;
-	if (code == TTS_CONFIG_ERROR_OUT_OF_MEMORY)		return TTS_SETTING_ERROR_OUT_OF_MEMORY;
 
-	return TTS_CONFIG_ERROR_NONE;
+	return TTS_SETTING_ERROR_NONE;
 }
 
 void __setting_config_engine_changed_cb(const char* engine_id, const char* setting, const char* language, int voice_type, bool auto_voice, void* user_data)
@@ -118,14 +118,14 @@ int tts_setting_initialize()
 	int ret = tts_config_mgr_initialize(getpid());
 	if (0 != ret) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Fail to initialize config manager : %d", ret);
-		return __convert_error_code(ret);
+		return __setting_convert_config_error_code(ret);
 	}
 
 	ret = tts_config_mgr_set_callback(getpid(), __setting_config_engine_changed_cb, __setting_config_voice_changed_cb, 
 		__setting_config_speech_rate_changed_cb, __setting_config_pitch_changed_cb, NULL);
 	if (0 != ret) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Fail to set config changed : %d", ret);
-		return __convert_error_code(ret);
+		return __setting_convert_config_error_code(ret);
 	}
 
 	g_state = TTS_SETTING_STATE_READY;
@@ -197,7 +197,7 @@ int tts_setting_foreach_supported_engines(tts_setting_supported_engine_cb callba
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);;
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_get_engine(char** engine_id)
@@ -228,7 +228,7 @@ int tts_setting_get_engine(char** engine_id)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_set_engine(const char* engine_id)
@@ -259,7 +259,7 @@ int tts_setting_set_engine(const char* engine_id)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
     
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_foreach_surpported_voices(tts_setting_supported_voice_cb callback, void* user_data)
@@ -297,10 +297,10 @@ int tts_setting_foreach_surpported_voices(tts_setting_supported_voice_cb callbac
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_get_voice(char** language, tts_setting_voice_type_e* voice_type)
+int tts_setting_get_voice(char** language, int* voice_type)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Get default voice");
 
@@ -324,10 +324,10 @@ int tts_setting_get_voice(char** language, tts_setting_voice_type_e* voice_type)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_set_voice(const char* language, tts_setting_voice_type_e voice_type)
+int tts_setting_set_voice(const char* language, int voice_type)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Set default voice");
 
@@ -356,7 +356,7 @@ int tts_setting_set_voice(const char* language, tts_setting_voice_type_e voice_t
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
     
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_set_auto_voice(bool value)
@@ -383,7 +383,7 @@ int tts_setting_set_auto_voice(bool value)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_get_auto_voice(bool* value)
@@ -410,10 +410,33 @@ int tts_setting_get_auto_voice(bool* value)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_get_speed(tts_setting_speed_e* speed)
+int tts_setting_get_speed_range(int* min, int* normal, int* max)
+{
+	SLOG(LOG_DEBUG, TAG_TTSC, "===== Get speed range");
+
+	if (TTS_SETTING_STATE_NONE == g_state) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Not initialized");
+		return TTS_SETTING_ERROR_INVALID_STATE;
+	}
+
+	if (NULL == min || NULL == normal || NULL == max) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Input parameter is null");
+		return TTS_SETTING_ERROR_INVALID_PARAMETER;
+	}
+
+	*min = TTS_SPEED_MIN;
+	*normal = TTS_SPEED_NORMAL;
+	*max = TTS_SPEED_MAX;
+
+	SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get speed range : min(%d) normal(%d) max(%d)", *min, *normal, *max);
+
+	return TTS_SETTING_ERROR_NONE;
+}
+
+int tts_setting_get_speed(int* speed)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Get default speed");
 
@@ -435,17 +458,17 @@ int tts_setting_get_speed(tts_setting_speed_e* speed)
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Result : %d", ret);
 	} else {
 		/* Copy value */
-		*speed = (tts_setting_speed_e)temp;
-		SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get default speed : %d ", (int)*speed);
+		*speed = temp;
+		SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get default speed : %d ", *speed);
 	}
 
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_set_speed(tts_setting_speed_e speed)
+int tts_setting_set_speed(int speed)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Set default speed");
 
@@ -454,12 +477,12 @@ int tts_setting_set_speed(tts_setting_speed_e speed)
 		return TTS_SETTING_ERROR_INVALID_STATE;
 	}
 
-	if (speed < TTS_SETTING_SPEED_VERY_SLOW || TTS_SETTING_SPEED_VERY_FAST < speed) {
+	if (TTS_SPEED_MIN > speed || speed > TTS_SPEED_MAX) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Invalid speed");
 		return TTS_SETTING_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = tts_config_mgr_set_speech_rate((int)speed);
+	int ret = tts_config_mgr_set_speech_rate(speed);
 	if (0 != ret) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Result : %d", ret);
 	} else {
@@ -469,10 +492,33 @@ int tts_setting_set_speed(tts_setting_speed_e speed)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_set_pitch(tts_setting_pitch_e pitch)
+int tts_setting_get_pitch_range(int* min, int* normal, int* max)
+{
+	SLOG(LOG_DEBUG, TAG_TTSC, "===== Get speed range");
+
+	if (TTS_SETTING_STATE_NONE == g_state) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Not initialized");
+		return TTS_SETTING_ERROR_INVALID_STATE;
+	}
+
+	if (NULL == min || NULL == normal || NULL == max) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Input parameter is null");
+		return TTS_SETTING_ERROR_INVALID_PARAMETER;
+	}
+
+	*min = TTS_PITCH_MIN;
+	*normal = TTS_PITCH_NORMAL;
+	*max = TTS_PITCH_MAX;
+
+	SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get pitch range : min(%d) normal(%d) max(%d)", *min, *normal, *max);
+
+	return TTS_SETTING_ERROR_NONE;
+}
+
+int tts_setting_set_pitch(int pitch)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Set default pitch");
 
@@ -481,7 +527,12 @@ int tts_setting_set_pitch(tts_setting_pitch_e pitch)
 		return TTS_SETTING_ERROR_INVALID_STATE;
 	}
 
-	int ret = tts_config_mgr_set_pitch((int)pitch);
+	if (TTS_PITCH_MIN > pitch || pitch > TTS_PITCH_MAX) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Invalid pitch");
+		return TTS_SETTING_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = tts_config_mgr_set_pitch(pitch);
 	if (0 != ret) {
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Result : %d", ret);
 	} else {
@@ -491,10 +542,10 @@ int tts_setting_set_pitch(tts_setting_pitch_e pitch)
 	SLOG(LOG_DEBUG, TAG_TTSC, "=====");
 	SLOG(LOG_DEBUG, TAG_TTSC, " ");
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
-int tts_setting_get_pitch(tts_setting_pitch_e* pitch)
+int tts_setting_get_pitch(int* pitch)
 {
 	SLOG(LOG_DEBUG, TAG_TTSC, "===== Get default pitch");
 
@@ -516,11 +567,11 @@ int tts_setting_get_pitch(tts_setting_pitch_e* pitch)
 		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Result : %d", ret);
 	} else {
 		/* Copy value */
-		*pitch = (tts_setting_pitch_e)temp;
-		SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get default pitch : %d ", (int)*pitch);
+		*pitch = temp;
+		SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[SUCCESS] Get default pitch : %d ", *pitch);
 	}
 
-	return __convert_error_code(ret);
+	return __setting_convert_config_error_code(ret);
 }
 
 int tts_setting_set_engine_changed_cb(tts_setting_engine_changed_cb callback, void* user_data)

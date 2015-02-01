@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved
+ * Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the License);
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@
  *   \#include <tts.h>
  * 
  * @section CAPI_UIX_TTS_MODULE_OVERVIEW Overview
- * A main function of Text-To-Speech(below TTS) API reads sound data transformed by engine using input text.
- * Applications can add input-text to queue for reading continuously and control player that can play, pause, and stop sound data synthesized from text.
+ * A main function of Text-To-Speech(below TTS) API reads sound data transformed by the engine using input texts.
+ * Applications can add input-text to queue for reading continuously and control a player that can play, pause, and stop sound data synthesized from text.
  *
  * To use of TTS, use the following steps:<br>
- * 1. Create handle <br>
+ * 1. Create a handle <br>
  * 2. Register callback functions for notifications <br> 
  * 3. Prepare tts-daemon asynchronously <br>
  * 4. Add text to queue for speech <br>
@@ -39,10 +39,10 @@
  * 6. Pause the player <br>
  * 7. Resume the player <br>
  * 8. Stop the player <br>
- * 9. Destroy handle <br>
+ * 9. Destroy a handle <br>
  * 
  * The TTS API also notifies you (by callback mechanism) when the state of TTS is changed, 
- * utterance is started and completed, default voice is changed or error occured.
+ * utterance is started and completed, default voice is changed or an error occured.
  * An application should register callback functions: tts_state_changed_cb(), tts_utterance_started_cb(), 
  * tts_utterance_completed_cb(), tts_default_voice_changed_cb(), tts_error_cb().
  *
@@ -74,7 +74,7 @@
  * </tr>
  * <tr>
  * <td>tts_stop()</td>
- * <td>Playing, Paused</td>
+ * <td>Ready, Playing, Paused</td>
  * <td>Ready</td>
  * <td>SYNC</td>
  * </tr>
@@ -143,7 +143,12 @@
  * <td></td>
  * </tr>
  * <tr>
- * <td>tts_get_max_text_count()</td>
+ * <td>tts_get_max_text_size()</td>
+ * <td>Ready</td>
+ * <td></td>
+ * </tr>
+ * <tr>
+ * <td>tts_get_speed_range()</td>
  * <td>Ready</td>
  * <td></td>
  * </tr>
@@ -159,7 +164,7 @@
  * </tr>
  * <tr>
  * <td>tts_stop()</td>
- * <td>Playing, Paused</td>
+ * <td>Ready, Playing, Paused</td>
  * <td></td>
  * </tr>
  * <tr>
@@ -184,6 +189,14 @@
  * </tr>
  * </table>
  * 
+ * @section CAPI_UIX_TTS_MODULE_FEATURE Related Features
+ * This API is related with the following features:<br>
+ *  - http://tizen.org/feature/speech.synthesis<br>
+ *
+ * It is recommended to design feature related codes in your application for reliability.<br>
+ * You can check if a device supports the related features for this API by using @ref CAPI_SYSTEM_SYSTEM_INFO_MODULE, thereby controlling the procedure of your application.<br>
+ * To ensure your application is only running on the device with specific features, please define the features in your manifest file using the manifest editor in the SDK.<br>
+ * More details on featuring your application can be found from <a href="../org.tizen.mobile.native.appprogramming/html/ide_sdk_tools/feature_element.htm"><b>Feature Element</b>.</a>
  *
  */
 

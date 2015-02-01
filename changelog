@@ -1,3 +1,32 @@
+tts (0.2.41) -- Sat, 13 Aug 2014
+
+  * Update play start after synthesis (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Remove not used error function (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.40) -- Mon, 07 Jul 2014
+
+  * Fix error code (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix memory issue (Kwangyoun Kim <ky85.kim@samsung.com>)
+  * Add retry when file read fail (Kwangyoun Kim <ky85.kim@samsung.com>)
+  * Update engine error print (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.39) -- Thu, 26 Jun 2014
+
+  * Update API for speed and pitch value (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Remove legacy code for sound type (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.38) -- Thu, 19 Jun 2014
+
+  * Fix daemon privilege (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Fix config file mode change (Dongyeol Lee <dy3.lee@samsung.com>)
+
+tts (0.2.37) -- Thu, 29 May 2014
+
+  * Fix memory init and warning (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Update audio out type (Dongyeol Lee <dy3.lee@samsung.com>)
+  * Update boilerplate (Kwangyoun Kim <ky85.kim@samsung.com>)
+  * Update License info (Kwangyoun Kim <ky85.kim@samsung.com>)
+
 tts (0.2.36) -- Thu, 15 May 2014
 
   * Fix build for profile support (Kwangyoun Kim <ky85.kim@samsung.com>)

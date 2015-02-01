@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -30,7 +30,9 @@ void __ttsd_config_engine_changed_cb(const char* engine_id, const char* setting,
 	}
 
 	if (NULL != g_callback) {
+		SECURE_SLOG(LOG_DEBUG, get_tag(), "Call the engine reload callback : engine id(%s)", engine_id);
 		g_callback(TTS_CONFIG_TYPE_ENGINE, engine_id, 0);
+		SECURE_SLOG(LOG_DEBUG, get_tag(), "Call the voice changed callback : lang(%s), type(%d)", language, voice_type);
 		g_callback(TTS_CONFIG_TYPE_VOICE, language, voice_type);
 	} else {
 		SLOG(LOG_ERROR, get_tag(), "Config changed callback is NULL");

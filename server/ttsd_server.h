@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -42,8 +42,6 @@ int ttsd_server_finalize(int uid);
 int ttsd_server_get_support_voices(int uid, GList** voice_list);
 
 int ttsd_server_get_current_voice(int uid, char** language, int* voice_type);
-
-int ttsd_server_set_sound_type(int uid, int type);
 
 int ttsd_server_add_queue(int uid, const char* text, const char* lang, int voice_type, int speed, int utt_id);
 

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -47,14 +47,14 @@ int ttsd_engine_agent_unload_current_engine();
 /** Get state of current engine to need network */
 bool ttsd_engine_agent_need_network();
 
-bool ttsd_engine_select_valid_voice(const char* lang, int type, char** out_lang, ttsp_voice_type_e* out_type);
+bool ttsd_engine_select_valid_voice(const char* lang, int type, char** out_lang, int* out_type);
 
 bool ttsd_engine_agent_is_same_engine(const char* engine_id);
 
 /** Get/Set app option */
 int ttsd_engine_agent_set_default_engine(const char* engine_id);
 
-int ttsd_engine_agent_set_default_voice(const char* language, ttsp_voice_type_e vctype);
+int ttsd_engine_agent_set_default_voice(const char* language, int vctype);
 
 int ttsd_engine_agent_set_default_speed(int speed);
 
@@ -64,17 +64,17 @@ int ttsd_engine_agent_set_default_pitch(int pitch);
 * TTS Engine Interfaces for client
 */
 
-int ttsd_engine_load_voice(const char* lang, ttsp_voice_type_e vctype);
+int ttsd_engine_load_voice(const char* lang, int vctype);
 
-int ttsd_engine_unload_voice(const char* lang, ttsp_voice_type_e vctype);
+int ttsd_engine_unload_voice(const char* lang, int vctype);
 
-int ttsd_engine_start_synthesis(const char* lang, ttsp_voice_type_e vctype, const char* text, int speed, void* user_param);
+int ttsd_engine_start_synthesis(const char* lang, int vctype, const char* text, int speed, void* user_param);
 
 int ttsd_engine_cancel_synthesis();
 
 int ttsd_engine_get_voice_list(GList** voice_list);
 
-int ttsd_engine_get_default_voice(char** lang, ttsp_voice_type_e* vctype);
+int ttsd_engine_get_default_voice(char** lang, int* vctype);
 
 
 

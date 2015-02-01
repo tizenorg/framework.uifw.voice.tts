@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -15,8 +15,11 @@
 #ifndef __TTS_SETTING_H__
 #define __TTS_SETTING_H__
 
-#include <errno.h>
-#include <stdbool.h>
+#include <tizen.h>
+
+/**
+* @file tts_setting.h
+*/
 
 /**
 * @addtogroup TTS_SETTING_MODULE
@@ -31,48 +34,33 @@ extern "C" {
 * @brief Enumerations of error codes.
 */
 typedef enum {
-	TTS_SETTING_ERROR_NONE			= 0,		/**< Success, No error */
-	TTS_SETTING_ERROR_OUT_OF_MEMORY		= -ENOMEM,	/**< Out of Memory */
-	TTS_SETTING_ERROR_IO_ERROR		= -EIO,		/**< I/O error */
-	TTS_SETTING_ERROR_INVALID_PARAMETER	= -EINVAL,	/**< Invalid parameter */
-	TTS_SETTING_ERROR_INVALID_STATE		= -0x0100021,	/**< Invalid state */
-	TTS_SETTING_ERROR_INVALID_VOICE		= -0x0100022,	/**< Invalid voice */
-	TTS_SETTING_ERROR_ENGINE_NOT_FOUND	= -0x0100023,	/**< No available TTS-engine  */
-	TTS_SETTING_ERROR_OPERATION_FAILED	= -0x0100024,	/**< Operation failed  */
-	TTS_SETTING_ERROR_NOT_SUPPORTED_FEATURE	= -0x0100025	/**< Not supported feature of current engine */
+	TTS_SETTING_ERROR_NONE			= TIZEN_ERROR_NONE,		/**< Success, No error */
+	TTS_SETTING_ERROR_OUT_OF_MEMORY		= TIZEN_ERROR_OUT_OF_MEMORY,	/**< Out of Memory */
+	TTS_SETTING_ERROR_IO_ERROR		= TIZEN_ERROR_IO_ERROR,		/**< I/O error */
+	TTS_SETTING_ERROR_INVALID_PARAMETER	= TIZEN_ERROR_INVALID_PARAMETER,/**< Invalid parameter */
+	TTS_SETTING_ERROR_PERMISSION_DENIED	= TIZEN_ERROR_PERMISSION_DENIED,/**< Permission denied */
+	TTS_SETTING_ERROR_NOT_SUPPORTED		= TIZEN_ERROR_NOT_SUPPORTED,	/**< TTS is NOT supported */
+	TTS_SETTING_ERROR_INVALID_STATE		= TIZEN_ERROR_TTS | 0x01,	/**< Invalid state */
+	TTS_SETTING_ERROR_INVALID_VOICE		= TIZEN_ERROR_TTS | 0x02,	/**< Invalid voice */
+	TTS_SETTING_ERROR_ENGINE_NOT_FOUND	= TIZEN_ERROR_TTS | 0x03,	/**< No available TTS-engine  */
+	TTS_SETTING_ERROR_OPERATION_FAILED	= TIZEN_ERROR_TTS | 0x04,	/**< Operation failed  */
+	TTS_SETTING_ERROR_NOT_SUPPORTED_FEATURE	= TIZEN_ERROR_TTS | 0x06	/**< Not supported feature of current engine */
 } tts_setting_error_e;
 
 /** 
-* @brief Enumerations of speaking speed.
+* @brief Definitions for male voice type.
 */
-typedef enum {
-	TTS_SETTING_SPEED_VERY_SLOW	= 1,	/**< Very slow */
-	TTS_SETTING_SPEED_SLOW		= 2,	/**< Slow */
-	TTS_SETTING_SPEED_NORMAL	= 3,	/**< Normal */
-	TTS_SETTING_SPEED_FAST		= 4,	/**< Fast */
-	TTS_SETTING_SPEED_VERY_FAST	= 5	/**< Very fast */
-} tts_setting_speed_e;
+#define TTS_SETTING_VOICE_TYPE_MALE	1
 
 /** 
-* @brief Enumerations of speaking pitch.
+* @brief Definitions for female voice type.
 */
-typedef enum {
-	TTS_SETTING_PITCH_VERY_LOW	= 1,	/**< Very low */
-	TTS_SETTING_PITCH_LOW		= 2,	/**< Low */
-	TTS_SETTING_PITCH_NORMAL	= 3,	/**< Normal */
-	TTS_SETTING_PITCH_HIGH		= 4,	/**< High */
-	TTS_SETTING_PITCH_VERY_HIGH	= 5	/**< Very high */
-} tts_setting_pitch_e;
+#define TTS_SETTING_VOICE_TYPE_FEMALE	2
 
 /** 
-* @brief Enumerations of voice type.
+* @brief Definitions for child voice type.
 */
-typedef enum {
-	TTS_SETTING_VOICE_TYPE_MALE	= 1,	/**< Male */
-	TTS_SETTING_VOICE_TYPE_FEMALE	= 2,	/**< Female */
-	TTS_SETTING_VOICE_TYPE_CHILD	= 3	/**< Child */
-} tts_setting_voice_type_e;
-
+#define TTS_SETTING_VOICE_TYPE_CHILD	3
 
 /**
 * @brief Called to get a engine information.
@@ -104,7 +92,7 @@ typedef bool(*tts_setting_supported_engine_cb)(const char* engine_id, const char
 *
 * @see tts_setting_foreach_surpported_voices()
 */
-typedef bool(*tts_setting_supported_voice_cb)(const char* engine_id, const char* language, tts_setting_voice_type_e voice_type, void* user_data);
+typedef bool(*tts_setting_supported_voice_cb)(const char* engine_id, const char* language, int voice_type, void* user_data);
 
 /**
 * @brief Called when the default engine is changed.
@@ -132,7 +120,7 @@ typedef void (*tts_setting_engine_changed_cb)(const char* engine_id, void *user_
 * @see tts_setting_set_voice_changed_cb()
 * @see tts_setting_unset_voice_changed_cb()
 */
-typedef void (*tts_setting_voice_changed_cb)(const char* language, tts_setting_voice_type_e voice_type, bool auto_voice, void *user_data);
+typedef void (*tts_setting_voice_changed_cb)(const char* language, int voice_type, bool auto_voice, void *user_data);
 
 /**
 * @brief Called when the default speed is changed.
@@ -145,7 +133,7 @@ typedef void (*tts_setting_voice_changed_cb)(const char* language, tts_setting_v
 * @see tts_setting_set_speed_changed_cb()
 * @see tts_setting_unset_speed_changed_cb()
 */
-typedef void (*tts_setting_speed_changed_cb)(tts_setting_speed_e speed, void *user_data);
+typedef void (*tts_setting_speed_changed_cb)(int speed, void *user_data);
 
 /**
 * @brief Called when the default pitch is changed.
@@ -158,16 +146,19 @@ typedef void (*tts_setting_speed_changed_cb)(tts_setting_speed_e speed, void *us
 * @see tts_setting_set_pitch_changed_cb()
 * @see tts_setting_unset_pitch_changed_cb()
 */
-typedef void (*tts_setting_pitch_changed_cb)(tts_setting_pitch_e speed, void *user_data);
+typedef void (*tts_setting_pitch_changed_cb)(int pitch, void *user_data);
 
 
 /**
 * @brief Initialize TTS setting.
 *
+* @remarks If the function succeeds, @a tts setting must be released with tts_setting_finalize().
+*
 * @return 0 on success, otherwise a negative error value.
 * @retval #TTS_SETTING_ERROR_NONE Success.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE TTS setting has Already been initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_finalize()
 */
@@ -180,6 +171,7 @@ int tts_setting_initialize();
 * @retval #TTS_SETTING_ERROR_NONE Success.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_initialize()
 */
@@ -195,6 +187,8 @@ int tts_setting_finalize(void);
 * @retval #TTS_SETTING_ERROR_NONE Success.
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
+*
 * @post	This function invokes tts_setting_supported_engine_cb() repeatedly for getting engine information. 
 *
 * @see tts_setting_supported_engine_cb()
@@ -214,6 +208,7 @@ int tts_setting_foreach_supported_engines(tts_setting_supported_engine_cb callba
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_engine()
 */
@@ -229,6 +224,7 @@ int tts_setting_get_engine(char** engine_id);
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_get_engine()
 */
@@ -245,6 +241,7 @@ int tts_setting_set_engine(const char* engine_id);
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @post	This function invokes tts_setting_supported_voice_cb() repeatedly for getting supported voices. 
 *
@@ -266,10 +263,11 @@ int tts_setting_foreach_surpported_voices(tts_setting_supported_voice_cb callbac
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_voice()
 */
-int tts_setting_get_voice(char** language, tts_setting_voice_type_e* voice_type);
+int tts_setting_get_voice(char** language, int* voice_type);
 
 /**
 * @brief Set a default voice of current engine.
@@ -283,10 +281,11 @@ int tts_setting_get_voice(char** language, tts_setting_voice_type_e* voice_type)
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_INVALID_VOICE Invalid voice.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_get_voice()
 */
-int tts_setting_set_voice(const char* language, tts_setting_voice_type_e voice_type);
+int tts_setting_set_voice(const char* language, int voice_type);
 
 /**
 * @brief Get a automatic option of voice.
@@ -298,6 +297,7 @@ int tts_setting_set_voice(const char* language, tts_setting_voice_type_e voice_t
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_auto_voice()
 */
@@ -313,10 +313,29 @@ int tts_setting_get_auto_voice(bool* value);
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_get_auto_voice()
 */
 int tts_setting_set_auto_voice(bool value);
+
+/**
+* @brief Gets the speed range.
+*
+* @param[out] min The minimun speed value
+* @param[out] normal The normal speed value
+* @param[out] max The maximum speed value
+*
+* @return 0 on success, otherwise a negative error value
+* @retval #TTS_SETTING_ERROR_NONE Success.
+* @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
+* @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
+*
+* @see tts_setting_get_speed()
+* @see tts_setting_set_speed()
+*/
+int tts_setting_get_speed_range(int* min, int* normal, int* max);
 
 /**
 * @brief Get default speed.
@@ -328,10 +347,12 @@ int tts_setting_set_auto_voice(bool value);
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
+* @see tts_setting_get_speed_range()
 * @see tts_setting_set_speed()
 */
-int tts_setting_get_speed(tts_setting_speed_e* speed);
+int tts_setting_get_speed(int* speed);
 
 /**
 * @brief Set default speed.
@@ -343,10 +364,30 @@ int tts_setting_get_speed(tts_setting_speed_e* speed);
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
+* @see tts_setting_get_speed_range()
 * @see tts_setting_get_speed()
 */
-int tts_setting_set_speed(tts_setting_speed_e speed);
+int tts_setting_set_speed(int speed);
+
+/**
+* @brief Gets the pitch range.
+*
+* @param[out] min The minimun pitch value
+* @param[out] normal The normal pitch value
+* @param[out] max The maximum pitch value
+*
+* @return 0 on success, otherwise a negative error value
+* @retval #TTS_SETTING_ERROR_NONE Success.
+* @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter.
+* @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
+*
+* @see tts_setting_get_pitch()
+* @see tts_setting_set_pitch()
+*/
+int tts_setting_get_pitch_range(int* min, int* normal, int* max);
 
 /**
 * @brief Set a default pitch.
@@ -359,10 +400,12 @@ int tts_setting_set_speed(tts_setting_speed_e speed);
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
 * @retval #TTS_SETTING_ERROR_NOT_SUPPORTED_FEATURE Not supported feature.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
+* @see tts_setting_get_pitch_range()
 * @see tts_setting_set_pitch()
 */
-int tts_setting_get_pitch(tts_setting_pitch_e* pitch);
+int tts_setting_get_pitch(int* pitch);
 
 /**
 * @brief Set a default pitch.
@@ -375,10 +418,12 @@ int tts_setting_get_pitch(tts_setting_pitch_e* pitch);
 * @retval #TTS_SETTING_ERROR_INVALID_STATE Not initialized.
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Operation failure.
 * @retval #TTS_SETTING_ERROR_NOT_SUPPORTED_FEATURE Not supported feature.
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
+* @see tts_setting_get_pitch_range()
 * @see tts_setting_get_pitch()
 */
-int tts_setting_set_pitch(tts_setting_pitch_e pitch);
+int tts_setting_set_pitch(int pitch);
 
 /**
 * @brief Registers a callback function to be called when engine information is changed
@@ -390,6 +435,7 @@ int tts_setting_set_pitch(tts_setting_pitch_e pitch);
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_engine_changed_cb()
 * @see tts_setting_unset_engine_changed_cb()
@@ -402,6 +448,7 @@ int tts_setting_set_engine_changed_cb(tts_setting_engine_changed_cb callback, vo
 * @return 0 on success, otherwise a negative error value
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_engine_changed_cb()
 */
@@ -417,6 +464,7 @@ int tts_setting_unset_engine_changed_cb();
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_voice_changed_cb()
 * @see tts_setting_unset_voice_changed_cb()
@@ -429,6 +477,7 @@ int tts_setting_set_voice_changed_cb(tts_setting_voice_changed_cb callback, void
 * @return 0 on success, otherwise a negative error value
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_voice_changed_cb()
 */
@@ -444,6 +493,7 @@ int tts_setting_unset_voice_changed_cb();
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_speed_changed_cb()
 * @see tts_setting_unset_speed_changed_cb()
@@ -456,6 +506,7 @@ int tts_setting_set_speed_changed_cb(tts_setting_speed_changed_cb callback, void
 * @return 0 on success, otherwise a negative error value
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_speed_changed_cb()
 */
@@ -471,6 +522,7 @@ int tts_setting_unset_speed_changed_cb();
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_INVALID_PARAMETER Invalid parameter
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_pitch_changed_cb()
 * @see tts_setting_unset_pitch_changed_cb()
@@ -483,6 +535,7 @@ int tts_setting_set_pitch_changed_cb(tts_setting_pitch_changed_cb callback, void
 * @return 0 on success, otherwise a negative error value
 * @retval #TTS_SETTING_ERROR_NONE Successful
 * @retval #TTS_SETTING_ERROR_OPERATION_FAILED Invalid state
+* @retval #TTS_SETTING_ERROR_NOT_SUPPORTED TTS NOT supported
 *
 * @see tts_setting_set_pitch_changed_cb()
 */

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -227,7 +227,7 @@ int ttsd_dbus_server_get_current_voice(DBusConnection* conn, DBusMessage* msg)
 	dbus_error_init(&err);
 
 	int uid;
-	char* lang;
+	char* lang = NULL;
 	int voice_type;
 	int ret;
 
@@ -273,58 +273,7 @@ int ttsd_dbus_server_get_current_voice(DBusConnection* conn, DBusMessage* msg)
 		SLOG(LOG_ERROR, get_tag(), "[OUT ERROR] tts default voice : Fail to create reply message!!"); 
 	}
 
-	return 0;
-}
-
-int ttsd_dbus_server_set_sound_type(DBusConnection* conn, DBusMessage* msg)
-{
-	DBusError err;
-	dbus_error_init(&err);
-
-	int uid;
-	int type;
-	int ret;
-
-	dbus_message_get_args(msg, &err, DBUS_TYPE_INT32, &uid, DBUS_TYPE_INT32, &type, DBUS_TYPE_INVALID);
-
-	SLOG(LOG_DEBUG, get_tag(), ">>>>> TTS SET SOUND TYPE");
-
-	if (dbus_error_is_set(&err)) { 
-		SLOG(LOG_ERROR, get_tag(), "[IN ERROR] tts set sound type : Get arguments error (%s)", err.message);
-		dbus_error_free(&err);
-		ret = TTSD_ERROR_OPERATION_FAILED;
-	} else {
-		SECURE_SLOG(LOG_DEBUG, get_tag(), "[IN] tts set sound type : uid(%d)", uid); 
-		ret = ttsd_server_set_sound_type(uid, type);
-	}
-
-	DBusMessage* reply;
-	reply = dbus_message_new_method_return(msg);
-
-	if (NULL != reply) {
-		if (0 == ret) { 
-			/* Append result and voice */
-			dbus_message_append_args( reply, 
-				DBUS_TYPE_INT32, &ret,
-				DBUS_TYPE_INVALID);
-			SECURE_SLOG(LOG_DEBUG, get_tag(), "[OUT] tts set sound type");
-		} else {
-			dbus_message_append_args( reply, 
-				DBUS_TYPE_INT32, &ret,
-				DBUS_TYPE_INVALID);
-			SLOG(LOG_ERROR, get_tag(), "[OUT ERROR] tts set sound type : result(%d)", ret); 
-		}
-
-		if (!dbus_connection_send(conn, reply, NULL)) {
-			SLOG(LOG_ERROR, get_tag(), "[OUT ERROR] tts set sound type : Out Of Memory!");
-		}
-
-		dbus_connection_flush(conn);
-		dbus_message_unref(reply);
-	} else {
-		SLOG(LOG_ERROR, get_tag(), "[OUT ERROR] tts default voice : Fail to create reply message!!"); 
-	}
-
+	if (NULL != lang)	free(lang);
 	return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -17,17 +17,18 @@
 #include "ttsd_network.h"
 
 #include <Ecore.h>
+#include <privilege-control.h>
 
 #define CLIENT_CLEAN_UP_TIME 500
 
 static Ecore_Timer* g_check_client_timer = NULL;
 
-char* get_tag()
+const char* get_tag()
 {
 	return "ttsdsr";
 }
 
-char* tts_tag()
+const char* tts_tag()
 {
 	return "ttsdsr";
 }
@@ -43,9 +44,15 @@ int main()
 	SLOG(LOG_DEBUG, get_tag(), "  ");
 	SLOG(LOG_DEBUG, get_tag(), "  ");
 	SLOG(LOG_DEBUG, get_tag(), "===== TTS DAEMON SR INITIALIZE");
+
 	if (!ecore_init()) {
 		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail ecore_init()");
 		return -1;
+	}
+
+	if (0 == setuid(0)) {
+		/* daemon has root previlege */
+		perm_app_set_privilege("tts", NULL, NULL);
 	}
 
 	if (0 != ttsd_dbus_open_connection()) {

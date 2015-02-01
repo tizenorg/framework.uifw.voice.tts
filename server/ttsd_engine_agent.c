@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -64,8 +64,8 @@ typedef struct
 	bool	is_loaded;
 	int	client_ref_count;
 
-	char*			lang;
-	ttsp_voice_type_e	type;
+	char*	lang;
+	int	type;
 }ttsvoice_s;
 
 
@@ -102,7 +102,7 @@ bool __result_cb(ttsp_result_event_e event, const void* data, unsigned int data_
 		 ttsp_audio_type_e audio_type, int rate, void *user_data);
 
 /** Callback function for voice list */
-bool __supported_voice_cb(const char* language, ttsp_voice_type_e type, void* user_data);
+bool __supported_voice_cb(const char* language, int type, void* user_data);
 
 /** Free voice list */
 void __free_voice_list(GList* voice_list);
@@ -119,6 +119,22 @@ bool __engine_setting_cb(const char* key, const char* value, void* user_data);
 int ttsd_print_enginelist();
 
 int ttsd_print_voicelist();
+
+static const char* __ttsd_get_engine_error_code(ttsp_error_e err)
+{
+	switch(err) {
+	case TTSP_ERROR_NONE:			return "TTSP_ERROR_NONE";
+	case TTSP_ERROR_OUT_OF_MEMORY:		return "TTSP_ERROR_OUT_OF_MEMORY";
+	case TTSP_ERROR_IO_ERROR:		return "TTSP_ERROR_IO_ERROR";
+	case TTSP_ERROR_INVALID_PARAMETER:	return "TTSP_ERROR_INVALID_PARAMETER";
+	case TTSP_ERROR_OUT_OF_NETWORK:		return "TTSP_ERROR_OUT_OF_NETWORK";
+	case TTSP_ERROR_INVALID_STATE:		return "TTSP_ERROR_INVALID_STATE";
+	case TTSP_ERROR_INVALID_VOICE:		return "TTSP_ERROR_INVALID_VOICE";
+	case TTSP_ERROR_OPERATION_FAILED:	return "TTSP_ERROR_OPERATION_FAILED";
+	default:
+		return "Invalid error code";
+	}
+}
 
 int ttsd_engine_agent_init(synth_result_callback result_cb)
 {
@@ -144,18 +160,18 @@ int ttsd_engine_agent_init(synth_result_callback result_cb)
 	if (0 != ttsd_config_get_default_voice(&(g_cur_engine.default_lang), &(g_cur_engine.default_vctype))) {
 		SLOG(LOG_WARN, get_tag(), "[Server WARNING] There is No default voice in config"); 
 		/* Set default voice */
-		g_cur_engine.default_lang = strdup("en_US");
+		g_cur_engine.default_lang = strdup(TTS_BASE_LANGUAGE);
 		g_cur_engine.default_vctype = TTSP_VOICE_TYPE_FEMALE;
 	}
 
 	if (0 != ttsd_config_get_default_speed(&(g_cur_engine.default_speed))) {
 		SLOG(LOG_WARN, get_tag(), "[Server WARNING] There is No default speed in config"); 
-		g_cur_engine.default_speed = TTSP_SPEED_NORMAL;
+		g_cur_engine.default_speed = TTS_SPEED_NORMAL;
 	}
 
-	if (0 != ttsd_config_get_default_pitch(&(g_cur_engine.default_speed))) {
+	if (0 != ttsd_config_get_default_pitch(&(g_cur_engine.default_pitch))) {
 		SLOG(LOG_WARN, get_tag(), "[Server WARNING] There is No default pitch in config"); 
-		g_cur_engine.default_pitch = TTSP_PITCH_NORMAL;
+		g_cur_engine.default_pitch = TTS_PITCH_NORMAL;
 	}
 
 	SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Initialize Engine Agent");
@@ -189,6 +205,7 @@ int ttsd_engine_agent_release()
 				if (NULL != data->engine_uuid)		free(data->engine_uuid);
 				if (NULL != data->engine_name)		free(data->engine_name);
 				if (NULL != data->setting_ug_path)	free(data->setting_ug_path);
+				if (NULL != data->engine_path)		free(data->engine_path);
 				free(data);
 			}
 		}
@@ -196,6 +213,10 @@ int ttsd_engine_agent_release()
 	g_list_free(iter);
 
 	/* release current engine data */
+	if (g_cur_engine.engine_uuid != NULL)	free(g_cur_engine.engine_uuid);
+	if (g_cur_engine.engine_name != NULL)	free(g_cur_engine.engine_name);
+	if (g_cur_engine.engine_path != NULL)	free(g_cur_engine.engine_path);
+
 	if (g_cur_engine.pefuncs != NULL)	free(g_cur_engine.pefuncs);
 	if (g_cur_engine.pdfuncs != NULL)	free(g_cur_engine.pdfuncs);
 	if (g_cur_engine.default_lang != NULL)	free(g_cur_engine.default_lang);
@@ -253,6 +274,11 @@ int ttsd_engine_agent_initialize_current_engine()
 		is_get_engineid_from_config = true;
 	}
 
+	if (NULL == cur_engine_uuid) {
+			SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Current engine id is NULL");
+			return TTSD_ERROR_OPERATION_FAILED;
+	}
+
 	/* check whether cur engine uuid is valid or not. */
 	if (0 != __internal_check_engine_id(cur_engine_uuid)) {
 		SLOG(LOG_WARN, get_tag(), "[Engine Agent WARNING] It is not valid engine id from config");
@@ -263,6 +289,7 @@ int ttsd_engine_agent_initialize_current_engine()
 			iter = g_list_first(g_engine_list);
 		else {
 			SLOG(LOG_WARN, get_tag(), "[Engine Agent ERROR] NO TTS Engine !!");
+			if (NULL != cur_engine_uuid)	free(cur_engine_uuid);
 			return TTSD_ERROR_OPERATION_FAILED;	
 		}
 
@@ -283,6 +310,7 @@ int ttsd_engine_agent_initialize_current_engine()
 	/* set current engine */
 	if (0 != __internal_set_current_engine(cur_engine_uuid)) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] fail to set current engine ");
+		if (NULL != cur_engine_uuid)	free(cur_engine_uuid);
 		return TTSD_ERROR_OPERATION_FAILED;
 	} 
 
@@ -346,9 +374,6 @@ int __internal_get_engine_info(const char* filepath, ttsengine_info_s** info)
 	handle = dlopen(filepath, RTLD_LAZY);
 
 	if (!handle) {
-		if ((error = dlerror()) != NULL) {
-			SECURE_SLOG(LOG_WARN, get_tag(), "[Engine Agent] Fail message(%s)", error);
-		}
 		SECURE_SLOG(LOG_WARN, get_tag(), "[Engine Agent] Invalid engine : %s", filepath); 
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
@@ -454,9 +479,7 @@ int __internal_update_engine_list()
 			filepath = (char*)calloc(file_size, sizeof(char));
 
 			if (NULL != filepath) { 
-				strncpy(filepath, TTS_DEFAULT_ENGINE, strlen(TTS_DEFAULT_ENGINE) );
-				strncat(filepath, "/", strlen("/") );
-				strncat(filepath, dirp->d_name, strlen(dirp->d_name) );
+				snprintf(filepath, file_size, "%s/%s", TTS_DEFAULT_ENGINE, dirp->d_name);
 			} else {
 				SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Not enough memory!!" );
 				continue;	
@@ -485,10 +508,8 @@ int __internal_update_engine_list()
 			file_size = strlen(TTS_DOWNLOAD_ENGINE) + strlen(dirp->d_name) + 5;
 			filepath = (char*)calloc(file_size, sizeof(char));
 
-			if (NULL != filepath) { 
-				strcpy(filepath, TTS_DOWNLOAD_ENGINE);
-				strcat(filepath, "/");
-				strcat(filepath, dirp->d_name);
+			if (NULL != filepath) {
+				snprintf(filepath, file_size, "%s/%s", TTS_DOWNLOAD_ENGINE, dirp->d_name);
 			} else {
 				SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Not enough memory!!" );
 				continue;	
@@ -542,7 +563,7 @@ int __internal_set_current_engine(const char* engine_uuid)
 
 	/* If current engine does not exist, return error */
 	if (false == flag) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] __internal_set_current_engine : Cannot find engine id");
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Cannot find engine id");
 		return TTSD_ERROR_OPERATION_FAILED;
 	} else {
 		if (g_cur_engine.engine_uuid != NULL) {
@@ -560,7 +581,7 @@ int __internal_set_current_engine(const char* engine_uuid)
 	if (g_cur_engine.engine_path != NULL)	free(g_cur_engine.engine_path);
 
 	if (NULL == data->engine_uuid || NULL == data->engine_name || NULL == data->engine_path) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] __internal_set_current_engine : Engine data is NULL");
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Engine data is NULL");
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
@@ -582,7 +603,7 @@ int __internal_set_current_engine(const char* engine_uuid)
 	return 0;
 }
 
-bool __set_voice_info_cb(const char* language, ttsp_voice_type_e type, void* user_data)
+bool __set_voice_info_cb(const char* language, int type, void* user_data)
 {
 	if (NULL == language) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Input parameter is NULL in voice list callback!!!!");
@@ -634,13 +655,13 @@ int ttsd_engine_agent_load_current_engine()
 	}
 
 	if (false == g_cur_engine.is_set) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] ttsd_engine_agent_load_current_engine : No Current Engine ");
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] No Current Engine ");
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	/* check whether current engine is loaded or not */
 	if (true == g_cur_engine.is_loaded ) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent] ttsd_engine_agent_load_current_engine : Engine has already been loaded " );
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent] Engine has already been loaded " );
 		return 0;
 	}
 
@@ -672,7 +693,8 @@ int ttsd_engine_agent_load_current_engine()
 	int ret = 0;
 	ret = g_cur_engine.ttsp_load_engine(g_cur_engine.pdfuncs, g_cur_engine.pefuncs); 
 	if (0 != ret) {
-		SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] fail to load engine - %s : result(%d)", g_cur_engine.engine_path, ret);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] fail to load engine - %s : result(%s)", 
+			g_cur_engine.engine_path, __ttsd_get_engine_error_code(ret));
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
@@ -693,7 +715,7 @@ int ttsd_engine_agent_load_current_engine()
 
 	ret = g_cur_engine.pefuncs->initialize(__result_cb);
 	if (0 != ret) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to initialize current engine : result(%d)", ret);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to initialize current engine : %s", __ttsd_get_engine_error_code(ret));
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
@@ -707,10 +729,10 @@ int ttsd_engine_agent_load_current_engine()
 	/* Select default voice */
 	if (NULL != g_cur_engine.default_lang) {
 		if (true == g_cur_engine.pefuncs->is_valid_voice(g_cur_engine.default_lang, g_cur_engine.default_vctype)) {
-			SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Set origin default voice to current engine : lang(%s), type(%d)", 
+			SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Set origin default voice to current engine : lang(%s), type(%d)", 
 				g_cur_engine.default_lang,  g_cur_engine.default_vctype);
 		} else {
-			SECURE_SLOG(LOG_WARN, get_tag(), "[Engine Agent WARNING] Fail set origin default voice : lang(%s), type(%d)",
+			SLOG(LOG_WARN, get_tag(), "[Engine Agent WARNING] Fail set origin default voice : lang(%s), type(%d)",
 				g_cur_engine.default_lang, g_cur_engine.default_vctype);
 
 			return TTSD_ERROR_OPERATION_FAILED;
@@ -719,12 +741,13 @@ int ttsd_engine_agent_load_current_engine()
 
 	/* load default voice */
 	if (NULL != g_cur_engine.pefuncs->load_voice) {
-		if (0 == g_cur_engine.pefuncs->load_voice(g_cur_engine.default_lang, g_cur_engine.default_vctype)) {
-			SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Load default voice : lang(%s), type(%d)", 
+		ret = g_cur_engine.pefuncs->load_voice(g_cur_engine.default_lang, g_cur_engine.default_vctype);
+		if (0 == ret) {
+			SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Load default voice : lang(%s), type(%d)", 
 				g_cur_engine.default_lang,  g_cur_engine.default_vctype);
 		} else {
-			SECURE_SLOG(LOG_WARN, get_tag(), "[Engine Agent ERROR] Fail to load default voice : lang(%s), type(%d)",
-				g_cur_engine.default_lang, g_cur_engine.default_vctype);
+			SLOG(LOG_WARN, get_tag(), "[Engine Agent ERROR] Fail to load default voice : lang(%s), type(%d) result(%s)",
+				g_cur_engine.default_lang, g_cur_engine.default_vctype, __ttsd_get_engine_error_code(ret));
 
 			return TTSD_ERROR_OPERATION_FAILED;
 		}
@@ -771,7 +794,7 @@ int ttsd_engine_agent_load_current_engine()
 			g_cur_engine.default_lang = strdup(voice->language);
 			g_cur_engine.default_vctype = voice->type;
 
-			SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Select default voice : lang(%s), type(%d)", 
+			SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Select default voice : lang(%s), type(%d)", 
 				voice->language,  voice->type);
 
 			__free_voice_list(voice_list);
@@ -807,7 +830,7 @@ int ttsd_engine_agent_unload_current_engine()
 	int ret = 0;
 	ret = g_cur_engine.pefuncs->deinitialize();
 	if (0 != ret) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent] Fail deinitialize() : result(%d)", ret);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent] Fail deinitialize() : %s", __ttsd_get_engine_error_code(ret));
 	}
 
 	/* unload engine */
@@ -818,6 +841,23 @@ int ttsd_engine_agent_unload_current_engine()
 	/* reset current engine data */
 	g_cur_engine.handle = NULL;
 	g_cur_engine.is_loaded = false;
+
+	GSList *iter = NULL;
+	ttsvoice_s* data = NULL;
+
+	iter = g_slist_nth(g_cur_voices, 0);
+	while (NULL != iter) {
+		data = iter->data;
+
+		if (NULL != data) {
+			if (NULL != data->lang)		free(data->lang);
+			g_cur_voices = g_slist_remove(g_cur_voices, data);
+			free(data);
+			data = NULL;
+		}
+
+		iter = g_slist_nth(g_cur_voices, 0);
+	}
 
 	return 0;
 }
@@ -837,7 +877,7 @@ bool ttsd_engine_agent_need_network()
 	return g_cur_engine.need_network;
 }
 
-bool ttsd_engine_select_valid_voice(const char* lang, int type, char** out_lang, ttsp_voice_type_e* out_type)
+bool ttsd_engine_select_valid_voice(const char* lang, int type, char** out_lang, int* out_type)
 {
 	if (NULL == lang || NULL == out_lang || NULL == out_type) {
 		return false;
@@ -998,6 +1038,10 @@ int ttsd_engine_agent_set_default_engine(const char* engine_id)
 	bool is_engine_loaded = false; 
 	char* tmp_uuid = NULL;
 	tmp_uuid = strdup(g_cur_engine.engine_uuid);
+	if (NULL == tmp_uuid) {
+			SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Current engine id is NULL");
+			return TTSD_ERROR_OPERATION_FAILED;
+	}
 
 	is_engine_loaded = g_cur_engine.is_loaded;
 
@@ -1044,7 +1088,7 @@ int ttsd_engine_agent_set_default_engine(const char* engine_id)
 	return 0;
 }
 
-int ttsd_engine_agent_set_default_voice(const char* language, ttsp_voice_type_e vctype)
+int ttsd_engine_agent_set_default_voice(const char* language, int vctype)
 {
 	if (false == g_agent_init) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Not Initialized" );
@@ -1061,6 +1105,7 @@ int ttsd_engine_agent_set_default_voice(const char* language, ttsp_voice_type_e 
 		return TTSD_ERROR_INVALID_VOICE;
 	}
 
+	int ret = -1;
 	GSList *iter = NULL;
 	ttsvoice_s* data = NULL;
 
@@ -1080,13 +1125,14 @@ int ttsd_engine_agent_set_default_voice(const char* language, ttsp_voice_type_e 
 			if (0 == data->client_ref_count) {
 				/* load voice */
 				if (NULL != g_cur_engine.pefuncs->load_voice) {
-					if (0 == g_cur_engine.pefuncs->load_voice(data->lang, data->type)) {
+					ret = g_cur_engine.pefuncs->load_voice(data->lang, data->type);
+					if (0 == ret) {
 						SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] load voice : lang(%s), type(%d)", 
 							data->lang, data->type);
 						data->is_loaded = true;
 					} else {
-						SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to load voice : lang(%s), type(%d)",
-							data->lang, data->type);
+						SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to load voice : lang(%s), type(%d), result(%s)",
+							data->lang, data->type, __ttsd_get_engine_error_code(ret));
 					}
 				} else {
 					SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent ERROR] Load voice of engine function is NULL");
@@ -1119,13 +1165,14 @@ int ttsd_engine_agent_set_default_voice(const char* language, ttsp_voice_type_e 
 			if (0 == data->client_ref_count) {
 				/* Unload voice */
 				if (NULL != g_cur_engine.pefuncs->unload_voice) {
-					if (0 == g_cur_engine.pefuncs->unload_voice(data->lang, data->type)) {
+					ret = g_cur_engine.pefuncs->unload_voice(data->lang, data->type);
+					if (0 == ret) {
 						SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Unload voice : lang(%s), type(%d)", 
 							data->lang, data->type);
 						data->is_loaded = false;
 					} else {
-						SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to unload voice : lang(%s), type(%d)",
-							data->lang, data->type);
+						SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to unload voice : lang(%s), type(%d), result(%s)",
+							data->lang, data->type, __ttsd_get_engine_error_code(ret));
 					}
 				} else {
 					SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent ERROR] Unload voice of engine function is NULL");
@@ -1182,8 +1229,10 @@ int ttsd_engine_agent_set_default_pitch(int pitch)
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
-	if (false == g_cur_engine.pefuncs->set_pitch(pitch)) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to set pitch(%d)", pitch);
+	int ret = g_cur_engine.pefuncs->set_pitch(pitch);
+	if (0 != ret) {
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to set pitch : pitch(%d), result(%s)", 
+			pitch, __ttsd_get_engine_error_code(ret));
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
@@ -1196,9 +1245,10 @@ int ttsd_engine_agent_set_default_pitch(int pitch)
 * TTS Engine Interfaces for client
 *******************************************************************************************/
 
-int ttsd_engine_load_voice(const char* lang, const ttsp_voice_type_e vctype)
+int ttsd_engine_load_voice(const char* lang, const int vctype)
 {
 	/* 1. Find voice info */
+	int ret = -1;
 	GSList *iter = NULL;
 	ttsvoice_s* data = NULL;
 
@@ -1232,13 +1282,14 @@ int ttsd_engine_load_voice(const char* lang, const ttsp_voice_type_e vctype)
 	if (1 == data->client_ref_count && false == data->is_default) {
 		/* load voice */
 		if (NULL != g_cur_engine.pefuncs->load_voice) {
-			if (0 == g_cur_engine.pefuncs->load_voice(data->lang, data->type)) {
+			ret = g_cur_engine.pefuncs->load_voice(data->lang, data->type);
+			if (0 == ret) {
 				SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Load voice : lang(%s), type(%d)", 
 					data->lang, data->type);
 				data->is_loaded = true;
 			} else {
-				SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to load voice : lang(%s), type(%d)",
-					data->lang, data->type);
+				SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to load voice : lang(%s), type(%d), result(%s)",
+					data->lang, data->type, __ttsd_get_engine_error_code(ret));
 
 				return TTSD_ERROR_OPERATION_FAILED;
 			}
@@ -1257,9 +1308,10 @@ int ttsd_engine_load_voice(const char* lang, const ttsp_voice_type_e vctype)
 	return 0;
 }
 
-int ttsd_engine_unload_voice(const char* lang, const ttsp_voice_type_e vctype)
+int ttsd_engine_unload_voice(const char* lang, const int vctype)
 {
 	/* 1. Find voice info */
+	int ret = -1;
 	GSList *iter = NULL;
 	ttsvoice_s* data = NULL;
 
@@ -1293,13 +1345,14 @@ int ttsd_engine_unload_voice(const char* lang, const ttsp_voice_type_e vctype)
 	if (0 == data->client_ref_count && false == data->is_default) {
 		/* load voice */
 		if (NULL != g_cur_engine.pefuncs->unload_voice) {
-			if (0 == g_cur_engine.pefuncs->unload_voice(data->lang, data->type)) {
+			ret = g_cur_engine.pefuncs->unload_voice(data->lang, data->type);
+			if (0 == ret) {
 				SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent SUCCESS] Unload voice : lang(%s), type(%d)", 
 					data->lang, data->type);
 				data->is_loaded = false;
 			} else {
-				SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to unload voice : lang(%s), type(%d)",
-					data->lang, data->type);
+				SECURE_SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to unload voice : lang(%s), type(%d), result(%s)",
+					data->lang, data->type, __ttsd_get_engine_error_code(ret));
 
 				return TTSD_ERROR_OPERATION_FAILED;
 			}
@@ -1317,7 +1370,7 @@ int ttsd_engine_unload_voice(const char* lang, const ttsp_voice_type_e vctype)
 	return 0;
 }
 
-int ttsd_engine_start_synthesis(const char* lang, ttsp_voice_type_e vctype, const char* text, int speed, void* user_param)
+int ttsd_engine_start_synthesis(const char* lang, int vctype, const char* text, int speed, void* user_param)
 {
 	if (false == g_agent_init) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Not Initialized" );
@@ -1331,9 +1384,10 @@ int ttsd_engine_start_synthesis(const char* lang, ttsp_voice_type_e vctype, cons
 
 	/* select voice for default */
 	char* temp_lang = NULL;
-	ttsp_voice_type_e temp_type;
+	int temp_type;
 	if (true != ttsd_engine_select_valid_voice(lang, vctype, &temp_lang, &temp_type)) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to select default voice");
+		if (NULL != temp_lang)	free(temp_lang);
 		return TTSD_ERROR_INVALID_VOICE;
 	} else {
 		SECURE_SLOG(LOG_DEBUG, get_tag(), "[Engine Agent] Start synthesis : language(%s), type(%d), speed(%d), text(%s)", 
@@ -1342,11 +1396,11 @@ int ttsd_engine_start_synthesis(const char* lang, ttsp_voice_type_e vctype, cons
 
 	if (NULL == g_cur_engine.pefuncs->start_synth) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] start_synth() of engine is NULL!!");
-		if (NULL == temp_lang)	free(temp_lang);
+		if (NULL != temp_lang)	free(temp_lang);
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
-	ttsp_speed_e temp_speed;
+	int temp_speed;
 
 	if (0 == speed) {
 		temp_speed = g_cur_engine.default_speed;
@@ -1358,14 +1412,14 @@ int ttsd_engine_start_synthesis(const char* lang, ttsp_voice_type_e vctype, cons
 	int ret = 0;
 	ret = g_cur_engine.pefuncs->start_synth(temp_lang, temp_type, text, temp_speed, user_param);
 	if (0 != ret) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] ***************************************", ret);
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] * synthesize error : result(%6d) *", ret);
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] ***************************************", ret);
-		if (NULL == temp_lang)	free(temp_lang);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] ***************************************");
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] * synthesize error : %s *", __ttsd_get_engine_error_code(ret));
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] ***************************************");
+		if (NULL != temp_lang)	free(temp_lang);
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
-	if (NULL == temp_lang)	free(temp_lang);
+	if (NULL != temp_lang)	free(temp_lang);
 	return 0;
 }
 
@@ -1390,14 +1444,14 @@ int ttsd_engine_cancel_synthesis()
 	int ret = 0;
 	ret = g_cur_engine.pefuncs->cancel_synth();
 	if (0 != ret) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] fail cancel synthesis : result(%d)", ret);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] fail cancel synthesis : %s", __ttsd_get_engine_error_code(ret));
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;
 }
 
-bool __supported_voice_cb(const char* language, ttsp_voice_type_e type, void* user_data)
+bool __supported_voice_cb(const char* language, int type, void* user_data)
 {
 	GList** voice_list = (GList**)user_data;
 
@@ -1430,14 +1484,14 @@ int ttsd_engine_get_voice_list(GList** voice_list)
 	int ret = 0;
 	ret = g_cur_engine.pefuncs->foreach_voices(__supported_voice_cb, (void*)voice_list);
 	if (0 != ret) {
-		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to get voice list : result(%d)", ret);
+		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Fail to get voice list : %s", __ttsd_get_engine_error_code(ret));
 		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;
 }
 
-int ttsd_engine_get_default_voice(char** lang, ttsp_voice_type_e* vctype)
+int ttsd_engine_get_default_voice(char** lang, int* vctype)
 {
 	if (false == g_agent_init) {
 		SLOG(LOG_ERROR, get_tag(), "[Engine Agent ERROR] Not Initialized" );

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 #ifndef _TTS_DEFS_H__
 #define _TTS_DEFS_H__
 
+#include <vconf.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,21 +25,21 @@ extern "C" {
 * Definition for IPC
 *******************************************************************************************/
 
-#define TTS_CLIENT_SERVICE_NAME         "com.samsung.voice.ttsclient"
-#define TTS_CLIENT_SERVICE_OBJECT_PATH	"/com/samsung/voice/ttsclient"
-#define TTS_CLIENT_SERVICE_INTERFACE	"com.samsung.voice.ttsclient"
+#define TTS_CLIENT_SERVICE_NAME         "org.tizen.voice.ttsclient"
+#define TTS_CLIENT_SERVICE_OBJECT_PATH	"/org/tizen/voice/ttsclient"
+#define TTS_CLIENT_SERVICE_INTERFACE	"org.tizen.voice.ttsclient"
 
 #define TTS_SERVER_SERVICE_NAME		"service.connect.ttsserver"
-#define TTS_SERVER_SERVICE_OBJECT_PATH	"/com/samsung/voice/ttsserver"
-#define TTS_SERVER_SERVICE_INTERFACE	"com.samsung.voice.ttsserver"
+#define TTS_SERVER_SERVICE_OBJECT_PATH	"/org/tizen/voice/ttsserver"
+#define TTS_SERVER_SERVICE_INTERFACE	"org.tizen.voice.ttsserver"
 
 #define TTS_NOTI_SERVER_SERVICE_NAME		"service.connect.ttsnotiserver"
-#define TTS_NOTI_SERVER_SERVICE_OBJECT_PATH	"/com/samsung/voice/ttsnotiserver"
-#define TTS_NOTI_SERVER_SERVICE_INTERFACE	"com.samsung.voice.ttsnotiserver"
+#define TTS_NOTI_SERVER_SERVICE_OBJECT_PATH	"/org/tizen/voice/ttsnotiserver"
+#define TTS_NOTI_SERVER_SERVICE_INTERFACE	"org.tizen.voice.ttsnotiserver"
 
 #define TTS_SR_SERVER_SERVICE_NAME		"service.connect.ttssrserver"
-#define TTS_SR_SERVER_SERVICE_OBJECT_PATH	"/com/samsung/voice/ttssrserver"
-#define TTS_SR_SERVER_SERVICE_INTERFACE		"com.samsung.voice.ttssrserver"
+#define TTS_SR_SERVER_SERVICE_OBJECT_PATH	"/org/tizen/voice/ttssrserver"
+#define TTS_SR_SERVER_SERVICE_INTERFACE		"org.tizen.voice.ttssrserver"
 
 /******************************************************************************************
 * Message Definition for APIs
@@ -48,7 +50,6 @@ extern "C" {
 #define TTS_METHOD_FINALIZE		"tts_method_finalilze"
 #define TTS_METHOD_GET_SUPPORT_VOICES	"tts_method_get_support_voices"
 #define TTS_METHOD_GET_CURRENT_VOICE	"tts_method_get_current_voice"
-#define TTS_METHOD_SET_SOUND_TYPE	"tts_method_set_sound_type"
 #define TTS_METHOD_ADD_QUEUE		"tts_method_add_queue"
 #define TTS_METHOD_PLAY			"tts_method_play"
 #define TTS_METHOD_STOP			"tts_method_stop"
@@ -86,6 +87,30 @@ extern "C" {
 
 #define TTS_DEFAULT_ENGINE_SETTING	TTS_USR_BASE"/engine-setting"
 #define TTS_DOWNLOAD_ENGINE_SETTING	TTS_OPT_BASE"/engine-setting"
+
+#define TTS_BASE_LANGUAGE		"en_US"
+
+#define TTS_SPEED_MIN		1
+#define TTS_SPEED_NORMAL	8
+#define TTS_SPEED_MAX		15
+
+#define TTS_PITCH_MIN		1
+#define TTS_PITCH_NORMAL	8
+#define TTS_PITCH_MAX		15
+
+#define TTS_MAX_TEXT_SIZE	2000
+
+#define TTS_FEATURE_PATH	"tizen.org/feature/speech.synthesis"
+
+/******************************************************************************************
+* Defines for vconf key
+*******************************************************************************************/
+
+#define TTS_ACCESSIBILITY_KEY		VCONFKEY_SETAPPL_ACCESSIBILITY_TTS
+
+#define TTS_ACCESSIBILITY_SPEED_KEY	VCONFKEY_SETAPPL_ACCESSIBILITY_SPEECH_RATE
+
+#define TTS_LANGSET_KEY			VCONFKEY_LANGSET
 
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved
+# Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 SET(EXEC_PREFIX "${PREFIX}")
 SET(LIBDIR "${PREFIX}/lib")
 SET(INCLUDEDIR "${PREFIX}/include")
-SET(VERSION 0.2.36)
+SET(VERSION 0.2.41)
 
 ## Include common directory ##
 INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/common")
@@ -33,8 +33,8 @@ INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/common")
 ## Dependent packages ##
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED  
-	aul capi-media-audio-io dbus-1 dlog ecore glib-2.0 libxml-2.0 
-	mm-session vconf
+	aul capi-media-audio-io capi-system-info dbus-1 dlog ecore 
+	glib-2.0 libprivilege-control libxml-2.0 vconf
 )
 
 pkg_check_modules(pkgs_test REQUIRED
@@ -51,17 +51,10 @@ ADD_SUBDIRECTORY(client)
 ADD_SUBDIRECTORY(server)
 
 ## Smack rule ##
-IF(${CMAKE_BUILD_PROFILE} STREQUAL "wearable")
-    SET(SMACK_RULE_PATH "/etc/smack/accesses2.d")
-ELSE()
-    SET(SMACK_RULE_PATH "/etc/smack/accesses.d")
-ENDIF()
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-server.rule DESTINATION /etc/smack/accesses.d)
 
-INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-server.rule DESTINATION ${SMACK_RULE_PATH})
-
-## config ##
+## Config ##
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-config.xml DESTINATION /usr/lib/voice/tts/1.0)
-INSTALL(FILES ${CMAKE_SOURCE_DIR}/sysinfo-tts.xml DESTINATION /etc/config)
 
 ## Sample application ##
 ADD_SUBDIRECTORY(test)

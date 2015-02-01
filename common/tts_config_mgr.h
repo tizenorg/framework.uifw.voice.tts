@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012-2014 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -33,6 +33,17 @@ typedef enum {
 	TTS_CONFIG_ERROR_OPERATION_FAILED	= -0x0100024,	/**< Operation failed  */
 	TTS_CONFIG_ERROR_NOT_SUPPORTED_FEATURE	= -0x0100025	/**< Not supported feature of current engine */
 } tts_config_error_e;
+
+typedef enum {
+	TTS_CONFIG_SPEED_AUTO		= 0,	/**< Speed from settings */
+	TTS_CONFIG_SPEED_MIN		= 1,	/**< Min value */
+	TTS_CONFIG_SPEED_VERY_SLOW	= 2,	/**< Very slow */
+	TTS_CONFIG_SPEED_SLOW		= 5,	/**< Slow */
+	TTS_CONFIG_SPEED_NORMAL		= 8,	/**< Normal */
+	TTS_CONFIG_SPEED_FAST		= 11,	/**< Fast */
+	TTS_CONFIG_SPEED_VERY_FAST	= 14,	/**< Very fast */
+	TTS_CONFIG_SPEED_MAX		= 15	/**< Max value */
+}tts_config_speed_e;
 
 
 typedef bool (*tts_config_supported_engine_cb)(const char* engine_id, const char* engine_name, const char* setting, void* user_data);
