@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -25,33 +25,31 @@ typedef enum {
 	PLAYER_ERROR
 }player_event_e;
 
-typedef int (*player_result_callback_func)(player_event_e event, int uid, int utt_id);
+typedef enum {
+	TTSD_PLAYER_STATE_NULL,
+	TTSD_PLAYER_STATE_PAUSED,
+	TTSD_PLAYER_STATE_PLAYING
+}ttsd_player_state_e;
 
 /*
 * TTSD Player Interfaces 
 */
 
-int ttsd_player_init(player_result_callback_func result_cb);
+int ttsd_player_init();
 
 int ttsd_player_release(void);
 
-int ttsd_player_create_instance(const int uid);
+int ttsd_player_create_instance(int uid);
 
-int ttsd_player_destroy_instance(const int uid);
+int ttsd_player_destroy_instance(int uid);
 
-int ttsd_player_play(const int uid);
+int ttsd_player_play(int uid);
 
-int ttsd_player_next_play(int uid);
+int ttsd_player_stop(int uid);
 
-int ttsd_player_stop(const int uid);
+int ttsd_player_pause(int uid);
 
-int ttsd_player_pause(const int uid);
-
-int ttsd_player_resume(const int uid);
-
-int ttsd_player_get_current_client();
-
-int ttsd_player_get_current_utterance_id(const int uid);
+int ttsd_player_resume(int uid);
 
 int ttsd_player_all_stop();
 

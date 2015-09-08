@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -11,124 +11,124 @@
 *  limitations under the License.
 */
 
-#include "ttsd_main.h"
+
+#include "tts_config_mgr.h"
 #include "ttsd_config.h"
+#include "ttsd_main.h"
 
 
-#define CONFIG_FILE_PATH	BASE_DIRECTORY_DOWNLOAD"ttsd.conf"
-#define CONFIG_DEFAULT		BASE_DIRECTORY_DEFAULT"ttsd.conf"
+static ttsd_config_changed_cb g_callback;
 
-#define ENGINE_ID	"ENGINE_ID"
-#define VOICE		"VOICE"
-#define SPEED		"SPEED"
+static ttsd_config_screen_reader_changed_cb g_sr_callback;
 
-
-static char*	g_engine_id;
-static char*	g_language;
-static int	g_vc_type;
-static int	g_speed;
-
-int __ttsd_config_save()
+void __ttsd_config_engine_changed_cb(const char* engine_id, const char* setting, const char* language, int voice_type, bool auto_voice, void* user_data)
 {
-	FILE* config_fp;
-	config_fp = fopen(CONFIG_FILE_PATH, "w+");
-
-	if (NULL == config_fp) {
-		/* make file and file default */
-		SLOG(LOG_ERROR, TAG_TTSD, "[Config ERROR] Fail to load config (engine id)");
-		return -1;
+	/* Need to check engine is valid */
+	if (false == tts_config_check_default_engine_is_valid(engine_id)) {
+		SLOG(LOG_ERROR, get_tag(), "Engine id is NOT valid : %s", engine_id);
+		return;
 	}
 
-	/* Write engine id */
-	fprintf(config_fp, "%s %s\n", ENGINE_ID, g_engine_id);
-
-	/* Write voice */
-	fprintf(config_fp, "%s %s %d\n", VOICE, g_language, g_vc_type);
-
-	/* Read speed */
-	fprintf(config_fp, "%s %d\n", SPEED, g_speed);
-
-	fclose(config_fp);
-
-	return 0;
+	if (NULL != g_callback) {
+		SECURE_SLOG(LOG_DEBUG, get_tag(), "Call the engine reload callback : engine id(%s)", engine_id);
+		g_callback(TTS_CONFIG_TYPE_ENGINE, engine_id, 0);
+		SECURE_SLOG(LOG_DEBUG, get_tag(), "Call the voice changed callback : lang(%s), type(%d)", language, voice_type);
+		g_callback(TTS_CONFIG_TYPE_VOICE, language, voice_type);
+	} else {
+		SLOG(LOG_ERROR, get_tag(), "Config changed callback is NULL");
+	}
 }
 
-
-int __ttsd_config_load()
+void __ttsd_config_voice_changed_cb(const char* before_language, int before_type, const char* language, int type, bool auto_voice, void* user_data)
 {
-	FILE* config_fp;
-	char buf_id[256] = {0};
-	char buf_param[256] = {0};
-	int int_param = 0;
-
-	config_fp = fopen(CONFIG_FILE_PATH, "r");
-
-	if (NULL == config_fp) {
-		SLOG(LOG_WARN, TAG_TTSD, "[Config WARNING] Not open file(%s)", CONFIG_FILE_PATH);
-		
-		config_fp = fopen(CONFIG_DEFAULT, "r");
-		if (NULL == config_fp) {
-			SLOG(LOG_WARN, TAG_TTSD, "[Config WARNING] Not open original config file(%s)", CONFIG_FILE_PATH);
-			__ttsd_config_save();
-			return -1;
-		}
+	/* Need to check voice is valid */
+	if (false == tts_config_check_default_voice_is_valid(language, type)) {
+		SLOG(LOG_ERROR, get_tag(), "Lang(%s) type(%d) is NOT valid : %s", language, type);
+		return;
 	}
 
-	/* Read engine id */
-	fscanf(config_fp, "%s %s", buf_id, buf_param);
-	if (0 == strncmp(ENGINE_ID, buf_id, strlen(ENGINE_ID))) {
-		g_engine_id = strdup(buf_param);
+	if (NULL != g_callback) {
+		g_callback(TTS_CONFIG_TYPE_VOICE, language, type);
 	} else {
-		fclose(config_fp);
-		SLOG(LOG_WARN, TAG_TTSD, "[Config WARNING] Fail to load config (engine id)");
-		__ttsd_config_save();
-		return -1;
+		SLOG(LOG_ERROR, get_tag(), "Config changed callback is NULL");
 	}
-
-	/* Read voice */
-	fscanf(config_fp, "%s %s %d", buf_id, buf_param, &int_param);
-	if (0 == strncmp(VOICE, buf_id, strlen(VOICE))) {
-		g_language = strdup(buf_param);
-		g_vc_type = int_param;
-	} else {
-		fclose(config_fp);
-		SLOG(LOG_WARN, TAG_TTSD, "[Config WARNING] Fail to load config (voice)");
-		__ttsd_config_save();
-		return -1;
-	}
-
-	/* Read speed */
-	fscanf(config_fp, "%s %d", buf_id, &int_param);
-	if (0 == strncmp(SPEED, buf_id, strlen(SPEED))) {
-		g_speed = int_param;
-	} else {
-		fclose(config_fp);
-		SLOG(LOG_WARN, TAG_TTSD, "[Config WARNING] Fail to load config (speed)");
-		__ttsd_config_save();
-		return -1;
-	}
-
-	SLOG(LOG_DEBUG, TAG_TTSD, "[Config] Load config : engine(%s), voice(%s,%d), speed(%d)",
-		g_engine_id, g_language, g_vc_type, g_speed);
-
-	return 0;
 }
 
-int ttsd_config_initialize()
+void __ttsd_config_speech_rate_changed_cb(int value, void* user_data)
 {
-	g_engine_id = NULL;
-	g_language = NULL;
-	g_vc_type = 1;
-	g_speed = 3;
+	if (NULL != g_callback) {
+		g_callback(TTS_CONFIG_TYPE_SPEED, NULL, value);
+	} else {
+		SLOG(LOG_ERROR, get_tag(), "Config changed callback is NULL");
+	}
+}
 
-	__ttsd_config_load();
+void __ttsd_config_pitch_changed_cb(int value, void* user_data)
+{
+	if (NULL != g_callback) {
+		g_callback(TTS_CONFIG_TYPE_PITCH, NULL, value);
+	} else {
+		SLOG(LOG_ERROR, get_tag(), "Config changed callback is NULL");
+	}
+}
+
+void __ttsd_config_screen_reader_changed_cb(bool value)
+{
+	if (NULL != g_sr_callback) {
+		g_sr_callback(value);
+	}
+}
+
+int ttsd_config_initialize(ttsd_config_changed_cb config_cb)
+{
+	if (NULL == config_cb) {
+		SLOG(LOG_ERROR, get_tag(), "[Config] Invalid parameter");
+		return -1;
+	}
+
+	g_callback = config_cb;
+	g_sr_callback = NULL;
+
+	int ret = -1;
+	ret = tts_config_mgr_initialize(getpid());
+	if (0 != ret) {
+		SLOG(LOG_ERROR, get_tag(), "[Config] Fail to initialize config manager");
+		return -1;
+	}
+
+	ret = tts_config_mgr_set_callback(getpid(), __ttsd_config_engine_changed_cb, __ttsd_config_voice_changed_cb, 
+		__ttsd_config_speech_rate_changed_cb, __ttsd_config_pitch_changed_cb, NULL);
+	if (0 != ret) {
+		SLOG(LOG_ERROR, get_tag(), "[ERROR] Fail to set config changed : %d", ret);
+		return -1;
+	}
 
 	return 0;
 }
 
 int ttsd_config_finalize()
 {
-	__ttsd_config_save();
+	tts_config_unset_screen_reader_callback(getpid());
+
+	tts_config_mgr_finalize(getpid());
+
+	return 0;
+}
+
+int ttsd_config_set_screen_reader_callback(ttsd_config_screen_reader_changed_cb sr_cb)
+{
+	if (NULL == sr_cb) {
+		SLOG(LOG_ERROR, get_tag(), "[Config] Invalid parameter");
+		return -1;
+	}
+
+	g_sr_callback = sr_cb;
+
+	int ret = tts_config_set_screen_reader_callback(getpid(), __ttsd_config_screen_reader_changed_cb) ;
+	if (0 != ret) {
+		SLOG(LOG_ERROR, get_tag(), "[Config] Fail to set screen reader callback");
+		return -1;
+	}
 	return 0;
 }
 
@@ -137,7 +137,11 @@ int ttsd_config_get_default_engine(char** engine_id)
 	if (NULL == engine_id)
 		return -1;
 
-	*engine_id = strdup(g_engine_id);
+	if (0 != tts_config_mgr_get_engine(engine_id)) {
+		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get engine id");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -146,11 +150,12 @@ int ttsd_config_set_default_engine(const char* engine_id)
 	if (NULL == engine_id)
 		return -1;
 
-	if (NULL != g_engine_id)
-		free(g_engine_id);
+	if (true == tts_config_check_default_engine_is_valid(engine_id)) {
+		if (0 != tts_config_mgr_set_engine(engine_id)) {
+			SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to set engine id");
+		}
+	}
 
-	g_engine_id = strdup(engine_id);
-	__ttsd_config_save();
 	return 0;
 }
 
@@ -159,24 +164,9 @@ int ttsd_config_get_default_voice(char** language, int* type)
 	if (NULL == language || NULL == type)
 		return -1;
 
-	*language = strdup(g_language);
-	*type = g_vc_type;
-
-	return 0;
-}
-
-int ttsd_config_set_default_voice(const char* language, int type)
-{
-	if (NULL == language)
-		return -1;
-
-	if (NULL != g_language)
-		free(g_language);
-
-	g_language = strdup(language);
-	g_vc_type = type;
-
-	__ttsd_config_save();
+	if (0 != tts_config_mgr_get_voice(language, type)) {
+		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default voice");
+	}
 
 	return 0;
 }
@@ -186,14 +176,38 @@ int ttsd_config_get_default_speed(int* speed)
 	if (NULL == speed)
 		return -1;
 
-	*speed = g_speed;
+	if (0 != tts_config_mgr_get_speech_rate(speed)) {
+		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default speech rate");
+	}
 
 	return 0;
 }
 
-int ttsd_config_set_default_speed(int speed)
+int ttsd_config_get_default_pitch(int* pitch)
 {
-	g_speed = speed;
-	__ttsd_config_save();
+	if (NULL == pitch)
+		return -1;
+
+	if (0 != tts_config_mgr_get_pitch(pitch)) {
+		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default pitch");
+	}
+
+	return 0;
+}
+
+int ttsd_config_save_error(int uid, int uttid, const char* lang, int vctype, const char* text, 
+			   const char* func, int line, const char* message)
+{
+	SLOG(LOG_ERROR, get_tag(), "=============== TTS ERROR LOG ====================");
+
+	SLOG(LOG_ERROR, get_tag(), "uid(%d) uttid(%d)", uid, uttid);
+	
+	if (NULL != func) 	SLOG(LOG_ERROR, get_tag(), "Function(%s) Line(%d)", func, line);
+	if (NULL != message) 	SLOG(LOG_ERROR, get_tag(), "Message(%s)", message);
+	if (NULL != lang) 	SLOG(LOG_ERROR, get_tag(), "Lang(%s), type(%d)", lang, vctype);
+	if (NULL != text) 	SLOG(LOG_ERROR, get_tag(), "Text(%s)", text);
+
+	SLOG(LOG_ERROR, get_tag(), "==================================================");
+
 	return 0;
 }

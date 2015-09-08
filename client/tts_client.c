@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved 
+*  Copyright (c) 2011-2014 Samsung Electronics Co., Ltd All Rights Reserved 
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
 *  You may obtain a copy of the License at
@@ -37,9 +37,17 @@ static int __client_generate_uid(int pid)
 int tts_client_new(tts_h* tts)
 {
 	tts_client_s* client = NULL;
-	client = (tts_client_s*)g_malloc0 (sizeof(tts_client_s));
-
-	tts_h temp = (tts_h)g_malloc0(sizeof(tts_h));
+	client = (tts_client_s*)calloc(1, sizeof(tts_client_s));
+	if (NULL == client) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Fail to allocate memory");
+		return TTS_ERROR_OUT_OF_MEMORY;
+	}
+	tts_h temp = (tts_h)calloc(1, sizeof(struct tts_s));
+	if (NULL == temp) {
+		SLOG(LOG_ERROR, TAG_TTSC, "[ERROR] Fail to allocate memory");
+		free(client);
+		return TTS_ERROR_OUT_OF_MEMORY;
+	}
 	temp->handle = __client_generate_uid(getpid()); 
 
 	/* initialize client data */
@@ -50,7 +58,7 @@ int tts_client_new(tts_h* tts)
 
 	client->state_changed_cb = NULL;
 	client->state_changed_user_data = NULL;
-	
+
 	client->utt_started_cb = NULL;
 	client->utt_started_user_data = NULL;
 	client->utt_completeted_cb = NULL;
@@ -58,7 +66,12 @@ int tts_client_new(tts_h* tts)
 
 	client->error_cb = NULL;
 	client->error_user_data = NULL;
+	client->default_voice_changed_cb = NULL;
+	client->default_voice_changed_user_data = NULL;
+	client->supported_voice_cb = NULL;
+	client->supported_voice_user_data = NULL;
 
+	client->mode = TTS_MODE_DEFAULT;
 	client->before_state = TTS_STATE_CREATED; 
 	client->current_state = TTS_STATE_CREATED; 
 
@@ -68,16 +81,16 @@ int tts_client_new(tts_h* tts)
 
 	*tts = temp;
 
-	SLOG(LOG_DEBUG, TAG_TTSC, "[Success] Create client object : uid(%d)", client->uid); 
+	SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[Success] Create client object : uid(%d)", client->uid); 
 
-	return 0;
+	return TTS_ERROR_NONE;
 }
 
 int tts_client_destroy(tts_h tts)
 {
 	if (tts == NULL) {
 		SLOG(LOG_ERROR, TAG_TTSC, "Input parameter is NULL");
-		return 0;
+		return TTS_ERROR_INVALID_PARAMETER;
 	}	
 
 	GList *iter = NULL;
@@ -100,7 +113,7 @@ int tts_client_destroy(tts_h tts)
 				free(data);
 				free(tts);
 
-				return 0;
+				return TTS_ERROR_NONE;
 			}
 
 			/* Next item */
@@ -109,7 +122,7 @@ int tts_client_destroy(tts_h tts)
 	}
 	SLOG(LOG_ERROR, TAG_TTSC, "Fail to destroy client : handle is not valid");
 
-	return -1;
+	return TTS_ERROR_INVALID_PARAMETER;
 }
 
 tts_client_s* tts_client_get(tts_h tts)
@@ -187,4 +200,60 @@ int tts_client_not_use_callback(tts_client_s* client)
 {
 	client->cb_ref_count--;
 	return 0;
+}
+
+int tts_client_get_use_callback(tts_client_s* client)
+{
+	return client->cb_ref_count;
+}
+
+int tts_client_get_connected_client_count()
+{
+	GList *iter = NULL;
+	tts_client_s *data = NULL;
+	int number = 0;
+
+	if (g_list_length(g_client_list) > 0) {
+		/* Get a first item */
+		iter = g_list_first(g_client_list);
+
+		while (NULL != iter) {
+			data = iter->data;
+			if (0 < data->current_state) {
+				number++;
+			}
+
+			/* Next item */
+			iter = g_list_next(iter);
+		}
+	}
+	return number;
+}
+
+int tts_client_get_mode_client_count(tts_mode_e mode)
+{
+	GList *iter = NULL;
+	tts_client_s *data = NULL;
+	int number = 0;
+
+	if (g_list_length(g_client_list) > 0) {
+		/* Get a first item */
+		iter = g_list_first(g_client_list);
+
+		while (NULL != iter) {
+			data = iter->data;
+			if (0 < data->current_state && data->mode == mode) {
+				number++;
+			}
+
+			/* Next item */
+			iter = g_list_next(iter);
+		}
+	}
+	return number;
+}
+
+GList* tts_client_get_client_list()
+{
+	return g_client_list;
 }

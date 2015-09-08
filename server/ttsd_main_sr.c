@@ -11,7 +11,6 @@
 *  limitations under the License.
 */
 
-
 #include "ttsd_main.h"
 #include "ttsd_server.h"
 #include "ttsd_dbus.h"
@@ -26,17 +25,17 @@ static Ecore_Timer* g_check_client_timer = NULL;
 
 const char* get_tag()
 {
-	return "ttsd";
+	return "ttsdsr";
 }
 
 const char* tts_tag()
 {
-	return "ttsd";
+	return "ttsdsr";
 }
 
 ttsd_mode_e ttsd_get_mode()
 {
-	return TTSD_MODE_DEFAULT;
+	return TTSD_MODE_SCREEN_READER;
 }
 
 /* Main of TTS Daemon */
@@ -44,7 +43,7 @@ int main()
 {
 	SLOG(LOG_DEBUG, get_tag(), "  ");
 	SLOG(LOG_DEBUG, get_tag(), "  ");
-	SLOG(LOG_DEBUG, get_tag(), "===== TTS DAEMON DEFAULT INITIALIZE");
+	SLOG(LOG_DEBUG, get_tag(), "===== TTS DAEMON SR INITIALIZE");
 
 	if (!ecore_init()) {
 		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail ecore_init()");
@@ -62,7 +61,7 @@ int main()
 	}
 
 	if (0 != ttsd_initialize()) {
-		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail to initialize tts-daemon"); 
+		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail to initialize tts-daemon-sr"); 
 		return EXIT_FAILURE;
 	}
 
@@ -75,14 +74,14 @@ int main()
 		SLOG(LOG_WARN, get_tag(), "[Main Warning] Fail to create timer of client check");
 	}
 
-	SLOG(LOG_DEBUG, get_tag(), "[Main] tts-daemon start..."); 
+	SLOG(LOG_DEBUG, get_tag(), "[Main] tts-daemon-sr start..."); 
 	SLOG(LOG_DEBUG, get_tag(), "=====");
 	SLOG(LOG_DEBUG, get_tag(), "  ");
 	SLOG(LOG_DEBUG, get_tag(), "  ");
 	
 	ecore_main_loop_begin();
 
-	SLOG(LOG_DEBUG, get_tag(), "===== TTS DAEMON DEFAULT FINALIZE");
+	SLOG(LOG_DEBUG, get_tag(), "===== TTS DAEMON SR FINALIZE");
 
 	if (NULL != g_check_client_timer) {
 		ecore_timer_del(g_check_client_timer);
