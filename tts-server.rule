@@ -5,11 +5,8 @@ tts-server pulseaudio rwxat
 tts-server sound_server rw
 tts-server system::homedir rwxat
 tts-server system::share rwxat
-tts-server system::use_internet rw
-tts-server system::vconf rwxat
-tts-server system::vconf_inhouse rwxat
-tts-server system::vconf_multimedia rwxat
-tts-server system::vconf_network rwxat
-tts-server system::vconf_system rwxat
 tts-server sys-assert::core rwxat
-system::use_internet tts-server w
+tts-server tizen::vconf::camcorder rl
+tts-server tizen::vconf::public::r rl
+tts-server tizen::vconf::public::r::platform::rw rw
+tts-server tizen::vconf::setting::admin rl

@@ -1,6 +1,6 @@
 Name:       tts
 Summary:    Text To Speech client library and daemon
-Version:    0.2.41
+Version:    0.2.43
 Release:    1
 Group:      Graphics & UI Framework/Voice Framework
 License:    Apache-2.0
@@ -8,6 +8,7 @@ Source0:    %{name}-%{version}.tar.gz
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires:  pkgconfig(aul)
+BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  pkgconfig(capi-media-audio-io)
 BuildRequires:  pkgconfig(capi-system-info)
 BuildRequires:  pkgconfig(dbus-1)
@@ -80,8 +81,12 @@ install LICENSE %{buildroot}/usr/share/license/%{name}
 mkdir -p /usr/lib/voice
 chsmack -a '_' /usr/lib/voice
 
-mkdir -p /usr/share/voice
+mkdir -p /usr/share/voice/test
 chsmack -a '_' /usr/share/voice
+chsmack -a '_' /usr/share/voice/test
+
+mkdir -p /usr/share/voice/tts
+chsmack -a '_' /usr/share/voice/tts
 
 mkdir -p /opt/home/app/.voice
 chown 5000:5000 /opt/home/app/.voice
@@ -98,6 +103,14 @@ chown 5000:5000 /opt/usr/data/voice/tts
 chown 5000:5000 /opt/usr/data/voice/tts/1.0
 chown 5000:5000 /opt/usr/data/voice/tts/1.0/engine-info
 
+chsmack -a '_' /usr/share/dbus-1/system-services/org.tizen.voice.ttsserver.service
+chsmack -a '_' /usr/share/dbus-1/system-services/org.tizen.voice.ttsnotiserver.service
+chsmack -a '_' /usr/share/dbus-1/system-services/org.tizen.voice.ttssrserver.service
+
+chsmack -a '_' /usr/bin/tts-daemon
+chsmack -a '_' /usr/bin/tts-daemon-noti
+chsmack -a '_' /usr/bin/tts-daemon-sr
+
 %postun -p /sbin/ldconfig
 
 %files
@@ -105,9 +118,10 @@ chown 5000:5000 /opt/usr/data/voice/tts/1.0/engine-info
 /etc/smack/accesses.d/tts-server.rule
 %defattr(-,root,root,-)
 %{_libdir}/lib*.so
-%{_libdir}/voice/tts/1.0/tts-config.xml
+/usr/share/voice/tts/tts-config.xml
 %{_bindir}/tts-daemon*
-/opt/usr/devel/bin/tts-test
+/usr/share/dbus-1/system-services/*
+/usr/share/voice/test/tts-test
 /usr/share/license/%{name}
 
 %files devel

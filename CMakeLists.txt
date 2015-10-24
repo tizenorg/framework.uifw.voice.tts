@@ -25,7 +25,7 @@ SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 SET(EXEC_PREFIX "${PREFIX}")
 SET(LIBDIR "${PREFIX}/lib")
 SET(INCLUDEDIR "${PREFIX}/include")
-SET(VERSION 0.2.41)
+SET(VERSION 0.2.43)
 
 ## Include common directory ##
 INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/common")
@@ -38,7 +38,7 @@ pkg_check_modules(pkgs REQUIRED
 )
 
 pkg_check_modules(pkgs_test REQUIRED
-    ecore
+    ecore dlog
 )
 
 ## API ##
@@ -54,7 +54,12 @@ ADD_SUBDIRECTORY(server)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-server.rule DESTINATION /etc/smack/accesses.d)
 
 ## Config ##
-INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-config.xml DESTINATION /usr/lib/voice/tts/1.0)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/tts-config.xml DESTINATION /usr/share/voice/tts)
+
+## Dbus service ##
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/org.tizen.voice.ttsserver.service DESTINATION /usr/share/dbus-1/system-services)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/org.tizen.voice.ttsnotiserver.service DESTINATION /usr/share/dbus-1/system-services)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/org.tizen.voice.ttssrserver.service DESTINATION /usr/share/dbus-1/system-services)
 
 ## Sample application ##
 ADD_SUBDIRECTORY(test)

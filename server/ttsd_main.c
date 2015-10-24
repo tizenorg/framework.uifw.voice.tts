@@ -56,15 +56,16 @@ int main()
 		perm_app_set_privilege("tts", NULL, NULL);
 	}
 
+	if (0 != ttsd_initialize()) {
+		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail to initialize tts-daemon"); 
+		return EXIT_FAILURE;
+	}
+
 	if (0 != ttsd_dbus_open_connection()) {
 		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail to open dbus connection");
 		return EXIT_FAILURE;
 	}
 
-	if (0 != ttsd_initialize()) {
-		SLOG(LOG_ERROR, get_tag(), "[Main ERROR] Fail to initialize tts-daemon"); 
-		return EXIT_FAILURE;
-	}
 
 	if (0 != ttsd_network_initialize()) {
 		SLOG(LOG_WARN, get_tag(), "[Main WARNING] Fail to initialize network");

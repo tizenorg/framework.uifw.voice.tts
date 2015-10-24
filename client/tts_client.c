@@ -81,7 +81,7 @@ int tts_client_new(tts_h* tts)
 
 	*tts = temp;
 
-	SECURE_SLOG(LOG_DEBUG, TAG_TTSC, "[Success] Create client object : uid(%d)", client->uid); 
+	SLOG(LOG_DEBUG, TAG_TTSC, "[Success] Create client object : uid(%d)", client->uid); 
 
 	return TTS_ERROR_NONE;
 }

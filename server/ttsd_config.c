@@ -139,7 +139,7 @@ int ttsd_config_get_default_engine(char** engine_id)
 
 	if (0 != tts_config_mgr_get_engine(engine_id)) {
 		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get engine id");
-		return -1;
+		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;
@@ -166,6 +166,7 @@ int ttsd_config_get_default_voice(char** language, int* type)
 
 	if (0 != tts_config_mgr_get_voice(language, type)) {
 		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default voice");
+		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;
@@ -178,6 +179,7 @@ int ttsd_config_get_default_speed(int* speed)
 
 	if (0 != tts_config_mgr_get_speech_rate(speed)) {
 		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default speech rate");
+		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;
@@ -190,6 +192,7 @@ int ttsd_config_get_default_pitch(int* pitch)
 
 	if (0 != tts_config_mgr_get_pitch(pitch)) {
 		SLOG(LOG_ERROR, get_tag(), "[Config ERROR] Fail to get default pitch");
+		return TTSD_ERROR_OPERATION_FAILED;
 	}
 
 	return 0;

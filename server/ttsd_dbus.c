@@ -22,14 +22,16 @@
 #include "ttsd_dbus.h"
 #include "ttsd_server.h"
 
+static DBusConnection* g_conn_sender = NULL;
+static DBusConnection* g_conn_listener = NULL;
 
-static DBusConnection* g_conn;
+static Ecore_Fd_Handler* g_dbus_fd_handler = NULL;
 
-static int g_waiting_time = 3000;
+//static int g_waiting_time = 3000;
 
-static char *g_service_name;
-static char *g_service_object;
-static char *g_service_interface;
+static char *g_service_name = NULL;
+static char *g_service_object = NULL;
+static char *g_service_interface = NULL;
 
 const char* __ttsd_get_error_code(ttsd_error_e err)
 {
@@ -54,7 +56,8 @@ const char* __ttsd_get_error_code(ttsd_error_e err)
 
 int ttsdc_send_hello(int pid, int uid)
 {
-	if (NULL == g_conn) { 
+#if 0
+	if (NULL == g_conn_sender) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Dbus connection is not available" );
 		return -1;
 	}
@@ -75,11 +78,11 @@ int ttsdc_send_hello(int pid, int uid)
 		target_if_name, 
 		TTSD_METHOD_HELLO);
 
-	if (NULL == msg) { 
-		SECURE_SLOG(LOG_ERROR, get_tag(), "<<<< [Dbus ERROR] Fail to create hello message : uid(%d)", uid); 
+	if (NULL == msg) {
+		SLOG(LOG_ERROR, get_tag(), "<<<< [Dbus ERROR] Fail to create hello message : uid(%d)", uid);
 		return -1;
 	} else {
-		SECURE_SLOG(LOG_DEBUG, get_tag(), "<<<< [Dbus] Send hello message : uid(%d)", uid);
+		SLOG(LOG_DEBUG, get_tag(), "<<<< [Dbus] Send hello message : uid(%d)", uid);
 	}
 
 	dbus_message_append_args(msg, DBUS_TYPE_INT32, &uid, DBUS_TYPE_INVALID);
@@ -90,7 +93,7 @@ int ttsdc_send_hello(int pid, int uid)
 	DBusMessage* result_msg;
 	int result = -1;
 
-	result_msg = dbus_connection_send_with_reply_and_block(g_conn, msg, g_waiting_time, &err);
+	result_msg = dbus_connection_send_with_reply_and_block(g_conn_sender, msg, g_waiting_time, &err);
 	dbus_message_unref(msg);
 	if (dbus_error_is_set(&err)) {
 		SLOG(LOG_ERROR, get_tag(), "[ERROR] Send error (%s)", err.message);
@@ -100,9 +103,9 @@ int ttsdc_send_hello(int pid, int uid)
 	if (NULL != result_msg) {
 		dbus_message_get_args(result_msg, &err, DBUS_TYPE_INT32, &result, DBUS_TYPE_INVALID);
 
-		if (dbus_error_is_set(&err)) { 
+		if (dbus_error_is_set(&err)) {
 			SLOG(LOG_ERROR, get_tag(), ">>>> [Dbus] Get arguments error (%s)", err.message);
-			dbus_error_free(&err); 
+			dbus_error_free(&err);
 			result = -1;
 		}
 
@@ -113,34 +116,43 @@ int ttsdc_send_hello(int pid, int uid)
 	}
 
 	return result;
+#endif
+	return 1;
 }
 
 int ttsdc_send_message(int pid, int uid, int data, const char *method)
 {
-	char* send_filename;
-	send_filename = tts_config_get_message_path((int)ttsd_get_mode(), pid);
-
-	if (NULL == send_filename) {
-		SLOG(LOG_ERROR, get_tag(), "[Message ERROR] Fail to get message file path");
+	if (NULL == g_conn_sender) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Dbus connection is not available");
 		return -1;
 	}
 
-	FILE* fp;
-	fp = fopen(send_filename, "a+");
+	DBusMessage* msg = NULL;
 
-	if (NULL != send_filename) {
-		free(send_filename);
-	}
+	/* create a message */
+	msg = dbus_message_new_signal(
+		TTS_CLIENT_SERVICE_OBJECT_PATH,	/* object name of the signal */
+		TTS_CLIENT_SERVICE_INTERFACE,	/* interface name of the signal */
+		method);			/* name of the signal */
 
-	if (NULL == fp) {
-		SLOG(LOG_ERROR, get_tag(), "[File message ERROR] Fail to open message file");
+	if (NULL == msg) {
+		SLOG(LOG_ERROR, get_tag(), "<<<< [Dbus ERROR] Fail to create message : %s", method);
 		return -1;
+	} else {
+		SLOG(LOG_DEBUG, get_tag(), "<<<< [Dbus] Send %s message : uid(%d) data(%d)", method, uid, data);
 	}
-	SECURE_SLOG(LOG_DEBUG, get_tag(), "[File message] Write send file - %s, uid=%d, send_data=%d", method, uid, data);
 
-	fprintf(fp, "%s %d %d\n", method, uid, data);
+	dbus_message_append_args(msg, DBUS_TYPE_INT32, &uid, DBUS_TYPE_INT32, &data, DBUS_TYPE_INVALID);
 
-	fclose(fp);
+	if (1 != dbus_connection_send(g_conn_sender, msg, NULL)) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to Send");
+		return -1;
+	} else {
+		SLOG(LOG_DEBUG, get_tag(), "[Dbus] SUCCESS Send");
+		dbus_connection_flush(g_conn_sender);
+	}
+
+	dbus_message_unref(msg);
 
 	return 0;
 }
@@ -162,28 +174,21 @@ int ttsdc_send_set_state_message(int pid, int uid, int state)
 
 int ttsdc_send_error_message(int pid, int uid, int uttid, int reason)
 {
-	if (NULL == g_conn) { 
+	if (NULL == g_conn_sender) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Dbus connection is not available" );
 		return -1;
 	}
 
-	char service_name[64];
-	memset(service_name, 0, 64);
-	snprintf(service_name, 64, "%s%d", TTS_CLIENT_SERVICE_NAME, pid);
+	DBusMessage* msg = NULL;
 
-	char target_if_name[128];
-	snprintf(target_if_name, sizeof(target_if_name), "%s%d", TTS_CLIENT_SERVICE_INTERFACE, pid);
+	/* create a message */
+	msg = dbus_message_new_signal(
+		TTS_CLIENT_SERVICE_OBJECT_PATH,	/* object name of the signal */
+		TTS_CLIENT_SERVICE_INTERFACE,	/* interface name of the signal */
+		TTSD_METHOD_ERROR);		/* name of the signal */
 
-	DBusMessage* msg;
-
-	msg = dbus_message_new_method_call(
-		service_name, 
-		TTS_CLIENT_SERVICE_OBJECT_PATH, 
-		target_if_name, 
-		TTSD_METHOD_ERROR);
-
-	if (NULL == msg) { 
-		SECURE_SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to create error message : uid(%d)", uid); 
+	if (NULL == msg) {
+		SECURE_SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to create error message : uid(%d)", uid);
 		return -1;
 	}
 
@@ -192,13 +197,15 @@ int ttsdc_send_error_message(int pid, int uid, int uttid, int reason)
 		DBUS_TYPE_INT32, &uttid, 
 		DBUS_TYPE_INT32, &reason, 
 		DBUS_TYPE_INVALID);
-	
-	if (!dbus_connection_send(g_conn, msg, NULL)) {
-		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] <<<< error message : Out Of Memory !"); 
+
+	dbus_message_set_no_reply(msg, TRUE);
+
+	if (!dbus_connection_send(g_conn_sender, msg, NULL)) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] <<<< error message : Out Of Memory !");
 	} else {
-		SECURE_SLOG(LOG_DEBUG, get_tag(), "<<<< Send error signal : uid(%d), reason(%s), uttid(%d)", 
+		SLOG(LOG_DEBUG, get_tag(), "<<<< Send error message : uid(%d), reason(%s), uttid(%d)", 
 			uid, __ttsd_get_error_code(reason), uttid);
-		dbus_connection_flush(g_conn);
+		dbus_connection_flush(g_conn_sender);
 	}
 
 	dbus_message_unref(msg);
@@ -208,16 +215,14 @@ int ttsdc_send_error_message(int pid, int uid, int uttid, int reason)
 
 static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handler)
 {
-	DBusConnection* conn = (DBusConnection*)data;
+	if (NULL == g_conn_listener)	return ECORE_CALLBACK_RENEW;
 
-	if (NULL == conn)	return ECORE_CALLBACK_RENEW;
-
-	dbus_connection_read_write_dispatch(conn, 50);
+	dbus_connection_read_write_dispatch(g_conn_listener, 50);
 
 	DBusMessage* msg = NULL;
-	msg = dbus_connection_pop_message(conn);
+	msg = dbus_connection_pop_message(g_conn_listener);
 
-	if (true != dbus_connection_get_is_connected(conn)) {
+	if (true != dbus_connection_get_is_connected(g_conn_listener)) {
 		SLOG(LOG_ERROR, get_tag(), "[ERROR] Connection is disconnected");
 		return ECORE_CALLBACK_RENEW;
 	}
@@ -229,31 +234,31 @@ static Eina_Bool listener_event_callback(void* data, Ecore_Fd_Handler *fd_handle
 
 	/* client event */
 	if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_HELLO)) {
-		ttsd_dbus_server_hello(conn, msg);
+		ttsd_dbus_server_hello(g_conn_listener, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_INITIALIZE)) {
-		ttsd_dbus_server_initialize(conn, msg);
+		ttsd_dbus_server_initialize(g_conn_listener, msg);
 	
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_FINALIZE)) {
-		ttsd_dbus_server_finalize(conn, msg);
+		ttsd_dbus_server_finalize(g_conn_listener, msg);
 	
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_GET_SUPPORT_VOICES)) {
-		ttsd_dbus_server_get_support_voices(conn, msg);
+		ttsd_dbus_server_get_support_voices(g_conn_listener, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_GET_CURRENT_VOICE)) {
-		ttsd_dbus_server_get_current_voice(conn, msg);
+		ttsd_dbus_server_get_current_voice(g_conn_listener, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_ADD_QUEUE)) {
-		ttsd_dbus_server_add_text(conn, msg);
+		ttsd_dbus_server_add_text(g_conn_listener, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_PLAY)) {
-		ttsd_dbus_server_play(conn, msg);
+		ttsd_dbus_server_play(g_conn_listener, msg);
 	
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_STOP)) {
-		ttsd_dbus_server_stop(conn, msg);
+		ttsd_dbus_server_stop(g_conn_listener, msg);
 
 	} else if (dbus_message_is_method_call(msg, g_service_interface, TTS_METHOD_PAUSE)) {
-		ttsd_dbus_server_pause(conn, msg);
+		ttsd_dbus_server_pause(g_conn_listener, msg);
 
 	} else {
 		/* Invalid method */
@@ -272,99 +277,51 @@ int ttsd_dbus_open_connection()
 
 	int ret;
 
-	/* connect to the bus and check for errors */
-	g_conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
-
-	if (dbus_error_is_set(&err)) { 
+	/* Create connection for sender */
+	g_conn_sender = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+	if (dbus_error_is_set(&err)) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail dbus_bus_get : %s", err.message);
-		dbus_error_free(&err); 
+		dbus_error_free(&err);
 	}
 
-	if (NULL == g_conn) { 
-		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to get dbus connection" );
+	if (NULL == g_conn_sender) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to get dbus connection sender");
+		return -1;
+	}
+
+	/* connect to the bus and check for errors */
+	g_conn_listener = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+	if (dbus_error_is_set(&err)) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail dbus_bus_get : %s", err.message);
+		dbus_error_free(&err);
+		return -1;
+	}
+
+	if (NULL == g_conn_listener) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to get dbus connection");
 		return -1;
 	}
 
 	if (TTSD_MODE_SCREEN_READER == ttsd_get_mode()) {
 		g_service_name = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_NAME) + 1, sizeof(char));
-		if (NULL == g_service_name) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			return -1;
-		}
-
 		g_service_object = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
-		if (NULL == g_service_object) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			g_service_name = NULL;
-			return -1;
-		}
-
 		g_service_interface = (char*)calloc(strlen(TTS_SR_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
-		if (NULL == g_service_interface) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			free(g_service_object);
-			g_service_name = NULL;
-			g_service_object = NULL;
-			return -1;
-		}
 
 		snprintf(g_service_name, strlen(TTS_SR_SERVER_SERVICE_NAME) + 1, "%s", TTS_SR_SERVER_SERVICE_NAME);
 		snprintf(g_service_object, strlen(TTS_SR_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_SR_SERVER_SERVICE_OBJECT_PATH);
 		snprintf(g_service_interface, strlen(TTS_SR_SERVER_SERVICE_INTERFACE) + 1, "%s", TTS_SR_SERVER_SERVICE_INTERFACE);
 	} else if (TTSD_MODE_NOTIFICATION == ttsd_get_mode()) {
 		g_service_name = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_NAME) + 1, sizeof(char));
-		if (NULL == g_service_name) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			return -1;
-		}
-
 		g_service_object = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
-		if (NULL == g_service_object) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			g_service_name = NULL;
-			return -1;
-		}
-
 		g_service_interface = (char*)calloc(strlen(TTS_NOTI_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
-		if (NULL == g_service_interface) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			free(g_service_object);
-			g_service_name = NULL;
-			g_service_object = NULL;
-			return -1;
-		}
 
 		snprintf(g_service_name, strlen(TTS_NOTI_SERVER_SERVICE_NAME) + 1, "%s", TTS_NOTI_SERVER_SERVICE_NAME);
 		snprintf(g_service_object, strlen(TTS_NOTI_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_NOTI_SERVER_SERVICE_OBJECT_PATH);
 		snprintf(g_service_interface, strlen(TTS_NOTI_SERVER_SERVICE_INTERFACE) + 1, "%s", TTS_NOTI_SERVER_SERVICE_INTERFACE);
 	} else {
 		g_service_name = (char*)calloc(strlen(TTS_SERVER_SERVICE_NAME) + 1, sizeof(char));
-		if (NULL == g_service_name) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			return -1;
-		}
-
 		g_service_object = (char*)calloc(strlen(TTS_SERVER_SERVICE_OBJECT_PATH) + 1, sizeof(char));
-		if (NULL == g_service_object) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			g_service_name = NULL;
-			return -1;
-		}
-
 		g_service_interface = (char*)calloc(strlen(TTS_SERVER_SERVICE_INTERFACE) + 1, sizeof(char));
-		if (NULL == g_service_interface) {
-			SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to allocate memory");
-			free(g_service_name);
-			free(g_service_object);
-			g_service_name = NULL;
-			g_service_object = NULL;
-			return -1;
-		}
 
 		snprintf(g_service_name, strlen(TTS_SERVER_SERVICE_NAME) + 1, "%s", TTS_SERVER_SERVICE_NAME);
 		snprintf(g_service_object, strlen(TTS_SERVER_SERVICE_OBJECT_PATH) + 1, "%s", TTS_SERVER_SERVICE_OBJECT_PATH);
@@ -372,39 +329,36 @@ int ttsd_dbus_open_connection()
 	}
 
 	/* request our name on the bus and check for errors */
-	ret = dbus_bus_request_name(g_conn, g_service_name, DBUS_NAME_FLAG_REPLACE_EXISTING, &err);
-
+	ret = dbus_bus_request_name(g_conn_listener, g_service_name, DBUS_NAME_FLAG_REPLACE_EXISTING, &err);
 	if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to be primary owner");
 		return -1;
 	}
 
-	if (dbus_error_is_set(&err)) { 
+	if (dbus_error_is_set(&err)) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to request dbus name : %s", err.message);
-		dbus_error_free(&err); 
-
+		dbus_error_free(&err);
 		return -1;
 	}
 
 	/* add a rule for getting signal */
 	char rule[128];
-	snprintf(rule, 128, "type='signal',interface='%s'", g_service_interface);
+	snprintf(rule, 128, "type='method_call',interface='%s'", g_service_interface);
 
 	/* add a rule for which messages we want to see */
-	dbus_bus_add_match(g_conn, rule, &err); /* see signals from the given interface */
-	dbus_connection_flush(g_conn);
+	dbus_bus_add_match(g_conn_listener, rule, &err);/* see signals from the given interface */
+	dbus_connection_flush(g_conn_listener);
 
-	if (dbus_error_is_set(&err)) { 
+	if (dbus_error_is_set(&err)) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] dbus_bus_add_match() : %s", err.message);
-		return -1; 
+		return -1;
 	}
 
 	int fd = 0;
-	dbus_connection_get_unix_fd(g_conn, &fd);
+	dbus_connection_get_unix_fd(g_conn_listener, &fd);
 
-	Ecore_Fd_Handler* fd_handler = NULL;
-	fd_handler = ecore_main_fd_handler_add(fd, ECORE_FD_READ, (Ecore_Fd_Cb)listener_event_callback, g_conn, NULL, NULL);
-	if (NULL == fd_handler) {
+	g_dbus_fd_handler = ecore_main_fd_handler_add(fd, ECORE_FD_READ, (Ecore_Fd_Cb)listener_event_callback, g_conn_listener, NULL, NULL);
+	if (NULL == g_dbus_fd_handler) {
 		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] Fail to get fd handler");
 		return -1;
 	}
@@ -417,115 +371,23 @@ int ttsd_dbus_close_connection()
 	DBusError err;
 	dbus_error_init(&err);
 
-	dbus_bus_release_name (g_conn, g_service_name, &err);
-
-	if (dbus_error_is_set(&err)) {
-		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] dbus_bus_release_name() : %s", err.message); 
-		dbus_error_free(&err); 
-		return -1;
+	if (NULL != g_dbus_fd_handler) {
+		ecore_main_fd_handler_del(g_dbus_fd_handler);
+		g_dbus_fd_handler = NULL;
 	}
+
+	dbus_bus_release_name (g_conn_listener, g_service_name, &err);
+	if (dbus_error_is_set(&err)) {
+		SLOG(LOG_ERROR, get_tag(), "[Dbus ERROR] dbus_bus_release_name() : %s", err.message);
+		dbus_error_free(&err);
+	}
+
+	g_conn_listener = NULL;
+	g_conn_sender = NULL;
 
 	if (NULL != g_service_name)	free(g_service_name);
 	if (NULL != g_service_object)	free(g_service_object);
 	if (NULL != g_service_interface)free(g_service_interface);
-
-	return 0;
-}
-
-int ttsd_file_msg_open_connection(int pid)
-{
-	/* Make file for Inotify */
-	char* send_filename;
-	send_filename = tts_config_get_message_path((int)ttsd_get_mode(), pid);
-
-	if (NULL == send_filename) {
-		SLOG(LOG_ERROR, get_tag(), "[Message ERROR] Fail to get message file path");
-		return -1;
-	}
-
-	FILE* fp;
-	fp = fopen(send_filename, "a+");
-	if (NULL == fp) {
-		SLOG(LOG_ERROR, get_tag(), "[File message ERROR] Fail to make message file");
-		if (NULL != send_filename)	free(send_filename);
-		return -1;
-	}
-	fclose(fp);
-
-	if (NULL != send_filename)	free(send_filename);
-	return 0;
-}
-
-int ttsd_file_msg_close_connection(int pid)
-{
-	/* delete inotify file */
-	char* path = NULL;
-	path = tts_config_get_message_path((int)ttsd_get_mode(), pid);
-
-	if (NULL == path) {
-		SLOG(LOG_ERROR, get_tag(), "[Message ERROR] Fail to get message file path");
-		return -1;
-	}
-
-	if (0 != remove(path)) {
-		SLOG(LOG_WARN, get_tag(), "[File message WARN] Fail to remove message file");
-	}
-
-	if (NULL != path)	free(path);
-	return 0;
-}
-
-int ttsd_file_clean_up()
-{
-	SLOG(LOG_DEBUG, get_tag(), "== Old message file clean up == ");
-
-	DIR *dp = NULL;
-	int ret = -1;
-	struct dirent entry;
-	struct dirent *dirp = NULL;
-
-	dp = opendir(MESSAGE_FILE_PATH_ROOT);
-	if (dp == NULL) {
-		SLOG(LOG_ERROR, get_tag(), "[File message WARN] Fail to open path : %s", MESSAGE_FILE_PATH_ROOT);
-		return -1;
-	}
-
-	char prefix[36] = {0, };
-	char remove_path[256] = {0, };
-
-	switch(ttsd_get_mode()) {
-	case TTSD_MODE_DEFAULT:		snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_DEFAULT);		break;
-	case TTSD_MODE_NOTIFICATION:	snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_NOTIFICATION);	break;
-	case TTSD_MODE_SCREEN_READER:	snprintf(prefix, 36, "%s", MESSAGE_FILE_PREFIX_SCREEN_READER);	break;
-	default:
-		SLOG(LOG_ERROR, get_tag(), "[File ERROR] Fail to get mode : %d", ttsd_get_mode());
-		closedir(dp);
-		return -1;
-	}
-
-	do {
-		ret = readdir_r(dp, &entry, &dirp);
-		if (0 != ret) {
-			SLOG(LOG_ERROR, get_tag(), "[File ERROR] Fail to read directory");
-			break;
-		}
-
-		if (NULL != dirp) {
-			if (!strncmp(prefix, dirp->d_name, strlen(prefix))) {
-				memset(remove_path, 0, 256);
-				snprintf(remove_path, 256, "%s%s", MESSAGE_FILE_PATH_ROOT, dirp->d_name);
-
-				/* Clean up code */
-				if (0 != remove(remove_path)) {
-					SLOG(LOG_WARN, get_tag(), "[File message WARN] Fail to remove message file : %s", remove_path);
-				} else {
-					SLOG(LOG_DEBUG, get_tag(), "[File message] Remove message file : %s", remove_path);
-				}
-			}
-		}
-	} while (NULL != dirp);
-
-	closedir(dp);
 
 	return 0;
 }
