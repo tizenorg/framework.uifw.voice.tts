@@ -209,6 +209,9 @@ int tts_dbus_close_connection()
 		g_dbus_fd_handler = NULL;
 	}
 
+	dbus_connection_close(g_conn_sender);
+	dbus_connection_close(g_conn_listener);
+
 	g_conn_sender = NULL;
 	g_conn_listener = NULL;
 
